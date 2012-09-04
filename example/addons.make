@@ -1,0 +1,6 @@
+ofxGLWarper
+ofxGui
+ofxOpenCv
+ofxTimeMeasurements
+ofxWarpBlendTool
+ofxXmlSettings
