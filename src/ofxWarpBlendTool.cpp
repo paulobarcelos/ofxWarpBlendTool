@@ -14,6 +14,7 @@ void Controller::setup(ofTexture * texture, string name, float guiWidth, ofPoint
 	guiHelperFbo.allocate(150, 30);
 	blendB = blendL = blendR = blendT = 0;
 	lastClickTime = ofGetElapsedTimeMillis();
+	historyIndex = -1;
 
 	// Generate filenames
 	string safename = safe_string(name);
@@ -389,158 +390,163 @@ void Controller::updateVertices(){
     }
 	
 }
-void Controller::saveVertices(){
+
+void Controller::saveVertices(float * handler){
+	int i = 0;
+	for (int c_i = 0; c_i <controlQuads.size(); c_i++) {
+		ControlQuad * c_quad = controlQuads[c_i];
+		handler[i++] = c_quad->index;
+		handler[i++] = c_quad->TL.x;
+		handler[i++] = c_quad->TL.y;
+		handler[i++] = c_quad->BL.x;
+		handler[i++] = c_quad->BL.y;
+		handler[i++] = c_quad->TR.x;
+		handler[i++] = c_quad->TR.y;
+		handler[i++] = c_quad->BR.x;
+		handler[i++] = c_quad->BR.y;
+		for (int i_i = 0; i_i < c_quad->internalQuads.size(); i_i++) {
+			InternalQuad * i_quad = c_quad->internalQuads[i_i];
+			handler[i++] = i_quad->index;
+			handler[i++] = i_quad->x;
+			handler[i++] = i_quad->y;
+			handler[i++] = i_quad->TL.x;
+			handler[i++] = i_quad->TL.y;
+			handler[i++] = i_quad->BL.x;
+			handler[i++] = i_quad->BL.y;
+			handler[i++] = i_quad->TR.x;
+			handler[i++] = i_quad->TR.y;
+			handler[i++] = i_quad->BR.x;
+			handler[i++] = i_quad->BR.y;
+		}
+	}
+}
+void Controller::loadVertices(float * handler){
+	int i = 0;
+	for (int c_i = 0; c_i <controlQuads.size(); c_i++) {
+		ControlQuad * c_quad = controlQuads[c_i];
+		c_quad->index = handler[i++];
+		c_quad->TL.x = handler[i++];
+		c_quad->TL.y = handler[i++];
+		c_quad->BL.x = handler[i++];
+		c_quad->BL.y = handler[i++];
+		c_quad->TR.x = handler[i++];
+		c_quad->TR.y = handler[i++];
+		c_quad->BR.x = handler[i++];
+		c_quad->BR.y = handler[i++];
+		
+		controlMesh.setVertex(c_quad->index + 0, c_quad->TL);
+		controlMesh.setVertex(c_quad->index + 1, c_quad->BL);
+		controlMesh.setVertex(c_quad->index + 2, c_quad->TR);
+		controlMesh.setVertex(c_quad->index + 3, c_quad->BR);
+		
+		for (int i_i = 0; i_i < c_quad->internalQuads.size(); i_i++) {
+			InternalQuad * i_quad = c_quad->internalQuads[i_i];
+			i_quad->index = handler[i++];
+			i_quad->x = handler[i++];
+			i_quad->y = handler[i++];
+			i_quad->TL.x = handler[i++];
+			i_quad->TL.y = handler[i++];
+			i_quad->BL.x = handler[i++];
+			i_quad->BL.y = handler[i++];
+			i_quad->TR.x = handler[i++];
+			i_quad->TR.y = handler[i++];
+			i_quad->BR.x = handler[i++];
+			i_quad->BR.y = handler[i++];
+			
+			internalMesh.setVertex(i_quad->index + 0, i_quad->TL);
+			internalMesh.setVertex(i_quad->index + 1, i_quad->BL);
+			internalMesh.setVertex(i_quad->index + 2, i_quad->TR);
+			
+			internalMesh.setVertex(i_quad->index + 3, i_quad->TR);
+			internalMesh.setVertex(i_quad->index + 4, i_quad->BL);
+			internalMesh.setVertex(i_quad->index + 5, i_quad->BR);
+		}
+	}
+}
+
+void Controller::savePerspective(ofxXmlSettings & handler){
+	perspective.saveToXml(handler);
+}
+void Controller::loadPerspective(ofxXmlSettings & handler){
+	perspective.loadFromXml(handler);
+}
+
+void Controller::saveGUI(ofxXmlSettings & handler){
+	gui.saveToXml(handler);
+}
+void Controller::loadGUI(ofxXmlSettings & handler){
+	gui.loadFromXml(handler);
+	int dummyi=0;
+	float dummyf=0;
+	onGridChange(dummyi); // will also update the coordinates;
+	onEnablePerpective(gui.getToggle("Perspective Warp"));
+	onBlendChange(dummyf);
+}
+
+void Controller::saveHistoryEntry(){
+	// generate the entry
+	HistoryEntry* entry = new HistoryEntry();
+	// allocate vertices data
 	const int numControlQuads = controlQuads.size();
 	const int controlQuadSize = 8 + 1;  // points + index
 	const int numInternalQuads = (resolution.x) * (resolution.y);
 	const int internalQuadSize = 8 + 2 + 1; // points + xy + index
 	const int dataSize = numControlQuads * controlQuadSize + (numControlQuads * numInternalQuads) * internalQuadSize;
-	float * data = new float[dataSize];
-	// structure:
-	// for each control
-	// index
-	// TL.x
-	// TL.y
-	// BL.x
-	// BL.y
-	// TR.x
-	// TR.y
-	// BR.x
-	// BR.y
-	//     for each internal
-	//     index
-	//     x
-	//     y
-	//     TL.x
-	//     TL.y
-	//     BL.x
-	//     BL.y
-	//     TR.x
-	//     TR.y
-	//     BR.x
-	//     BR.y
-	int i = 0;
-	for (int c_i = 0; c_i <controlQuads.size(); c_i++) {
-		ControlQuad * c_quad = controlQuads[c_i];
-		data[i++] = c_quad->index;
-		data[i++] = c_quad->TL.x;
-		data[i++] = c_quad->TL.y;
-		data[i++] = c_quad->BL.x;
-		data[i++] = c_quad->BL.y;
-		data[i++] = c_quad->TR.x;
-		data[i++] = c_quad->TR.y;
-		data[i++] = c_quad->BR.x;
-		data[i++] = c_quad->BR.y;
-		for (int i_i = 0; i_i < c_quad->internalQuads.size(); i_i++) {
-			InternalQuad * i_quad = c_quad->internalQuads[i_i];
-			data[i++] = i_quad->index;
-			data[i++] = i_quad->x;
-			data[i++] = i_quad->y;
-			data[i++] = i_quad->TL.x;
-			data[i++] = i_quad->TL.y;
-			data[i++] = i_quad->BL.x;
-			data[i++] = i_quad->BL.y;
-			data[i++] = i_quad->TR.x;
-			data[i++] = i_quad->TR.y;
-			data[i++] = i_quad->BR.x;
-			data[i++] = i_quad->BR.y;
-		}
-	}
+	entry->verticesData = new float[dataSize];
 	
-	ofFile writeFile;	
-	if(writeFile.open(meshFile, ofFile::WriteOnly, true)){
-		writeFile.write((char*) data, sizeof(float) * dataSize );
+	// push data to the entry
+	saveGUI(entry->guiData);
+	savePerspective(entry->perspectiveData);
+	saveVertices(entry->verticesData);
+	
+	// delete any "newer" history
+	while (history.size() > historyIndex+1) {
+		delete history[history.size()-1];
+		history.erase(history.end());
 	}
+	// pushback and increase index
+	history.push_back(entry);
+	historyIndex++;
 		
+	// make sure to delete too old history
+	while (history.size() > OFX_WARP_BLEND_TOOL_MAX_HISTORY) {
+		delete history[0];
+		history.erase(history.begin());
+	}
+}
+void Controller::loadHistoryEntry(unsigned int index){
+	if(!history.size()) return;
+	if (index > history.size()-1) index = history.size()-1;
+	historyIndex = index;
+	
+	HistoryEntry* entry = history[index];
+	loadGUI(entry->guiData);
+	loadPerspective(entry->perspectiveData);
+	loadVertices(entry->verticesData);
 }
 
-void Controller::loadVertices(){
-	fstream readFile;
-    readFile.open(ofToDataPath(meshFile).c_str(), ios::in | ios::binary);
-    if(readFile.good()){
-        
-        const int numControlQuads = controlQuads.size();
+void Controller::onSave(bool &value){
+	if(value){
+		ofxXmlSettings perspectiveSettings;
+		savePerspective(perspectiveSettings);
+		perspectiveSettings.saveFile(perspectiveFile);
+		
+		ofxXmlSettings guiSettings;
+		saveGUI(guiSettings);
+		guiSettings.saveFile(guiFile);
+		
+		const int numControlQuads = controlQuads.size();
 		const int controlQuadSize = 8 + 1;  // points + index
 		const int numInternalQuads = (resolution.x) * (resolution.y);
 		const int internalQuadSize = 8 + 2 + 1; // points + xy + index
 		const int dataSize = numControlQuads * controlQuadSize + (numControlQuads * numInternalQuads) * internalQuadSize;
 		float * data = new float[dataSize];
-        readFile.read((char*)data, sizeof(float) * dataSize);
-		// structure:
-		// for each control
-		// index
-		// TL.x
-		// TL.y
-		// BL.x
-		// BL.y
-		// TR.x
-		// TR.y
-		// BR.x
-		// BR.y
-		//     for each internal
-		//     index
-		//     x
-		//     y
-		//     TL.x
-		//     TL.y
-		//     BL.x
-		//     BL.y
-		//     TR.x
-		//     TR.y
-		//     BR.x
-		//     BR.y
-		int i = 0;
-		for (int c_i = 0; c_i <controlQuads.size(); c_i++) {
-			ControlQuad * c_quad = controlQuads[c_i];
-			c_quad->index = data[i++];
-			c_quad->TL.x = data[i++];
-			c_quad->TL.y = data[i++];
-			c_quad->BL.x = data[i++];
-			c_quad->BL.y = data[i++];
-			c_quad->TR.x = data[i++];
-			c_quad->TR.y = data[i++];
-			c_quad->BR.x = data[i++];
-			c_quad->BR.y = data[i++];
-			
-			controlMesh.setVertex(c_quad->index + 0, c_quad->TL);
-			controlMesh.setVertex(c_quad->index + 1, c_quad->BL);
-			controlMesh.setVertex(c_quad->index + 2, c_quad->TR);
-			controlMesh.setVertex(c_quad->index + 3, c_quad->BR);
-			
-			for (int i_i = 0; i_i < c_quad->internalQuads.size(); i_i++) {
-				InternalQuad * i_quad = c_quad->internalQuads[i_i];
-				i_quad->index = data[i++];
-				i_quad->x = data[i++];
-				i_quad->y = data[i++];
-				i_quad->TL.x = data[i++];
-				i_quad->TL.y = data[i++];
-				i_quad->BL.x = data[i++];
-				i_quad->BL.y = data[i++];
-				i_quad->TR.x = data[i++];
-				i_quad->TR.y = data[i++];
-				i_quad->BR.x = data[i++];
-				i_quad->BR.y = data[i++];
-				
-				internalMesh.setVertex(i_quad->index + 0, i_quad->TL);
-				internalMesh.setVertex(i_quad->index + 1, i_quad->BL);
-				internalMesh.setVertex(i_quad->index + 2, i_quad->TR);
-				
-				internalMesh.setVertex(i_quad->index + 3, i_quad->TR);
-				internalMesh.setVertex(i_quad->index + 4, i_quad->BL);
-				internalMesh.setVertex(i_quad->index + 5, i_quad->BR);
-			}
+		saveVertices(data);
+		ofFile writeFile;
+		if(writeFile.open(meshFile, ofFile::WriteOnly, true)){
+			writeFile.write((char*) data, sizeof(float) * dataSize );
 		}
-        
-	}else{
-		ofLogWarning("ofxWarpBlendTool::Controller:: unable to load mesh file: "+meshFile);
-	}
-}
-
-void Controller::onSave(bool &value){
-	if(value){
-		perspective.save(perspectiveFile);
-		gui.saveToFile(guiFile);
-		saveVertices();
+		delete data;
 	}
 }
 void Controller::onLoad(bool &value){
@@ -548,7 +554,7 @@ void Controller::onLoad(bool &value){
 		// Check if there is no saved file, if not, apply initial offset
 		ofxXmlSettings perspectiveSettings;
 		if(perspectiveSettings.loadFile(perspectiveFile)){
-			perspective.loadFromXml(perspectiveSettings);
+			loadPerspective(perspectiveSettings);
 		}
 		else{
 			perspectiveSettings.clear();
@@ -567,27 +573,53 @@ void Controller::onLoad(bool &value){
 			perspectiveSettings.setValue("corner:y",offY + 1.0, 3);
 			perspectiveSettings.popTag();
 
-			perspective.loadFromXml(perspectiveSettings);			
+			loadPerspective(perspectiveSettings);			
 		}
-				
-		gui.loadFromFile(guiFile);		
 		
-		int dummyi=0;
-		float dummyf=0;
-		onGridChange(dummyi); // will also update the coordinates;
-		onEnablePerpective(gui.getToggle("Perspective Warp"));
-		onBlendChange(dummyf);
+		ofxXmlSettings guiSettings;
+		guiSettings.loadFile(guiFile);
+		loadGUI(guiSettings);
 		
-		loadVertices();
+		
+		fstream readFile;
+		readFile.open(ofToDataPath(meshFile).c_str(), ios::in | ios::binary);
+		if(readFile.good()){
+			
+			const int numControlQuads = controlQuads.size();
+			const int controlQuadSize = 8 + 1;  // points + index
+			const int numInternalQuads = (resolution.x) * (resolution.y);
+			const int internalQuadSize = 8 + 2 + 1; // points + xy + index
+			const int dataSize = numControlQuads * controlQuadSize + (numControlQuads * numInternalQuads) * internalQuadSize;
+			float * data = new float[dataSize];
+			readFile.read((char*)data, sizeof(float) * dataSize);
+			loadVertices(data);
+			delete data;
+			
+		}else{
+			ofLogWarning("ofxWarpBlendTool::Controller:: unable to load mesh file: "+meshFile);
+		}
+		
+		// Save initial history entry
+		saveHistoryEntry();
+		
 	}
 }
 void Controller::onBlendChange(float & value){
+	if(blendT == gui.getFloatSlider("Blend Top")
+	   && blendB == gui.getFloatSlider("Blend Down")
+	   && blendL == gui.getFloatSlider("Blend Left")
+	   && blendL == gui.getFloatSlider("Blend Right")){
+		return;
+	}
+	guiHasChanged = true; // flag that gui has changed
+	
 	blendT = gui.getFloatSlider("Blend Top");
 	blendB = gui.getFloatSlider("Blend Down");
 	blendL = gui.getFloatSlider("Blend Left");
 	blendR = gui.getFloatSlider("Blend Right");
 }
 void Controller::onEnablePerpective(bool & value){
+	guiHasChanged = true; // flag that gui changed
     if(value){
         perspective.activate();
     }
@@ -596,13 +628,29 @@ void Controller::onEnablePerpective(bool & value){
     }
 }
 void Controller::onGridChange(int & value){
+	if(resolution.x == gui.getIntSlider("Horizontal Resolution")
+	   && resolution.y == gui.getIntSlider("Vertical Resolution")
+	   && gridSize.x == gui.getIntSlider("Grid Columns")
+	   && gridSize.y == gui.getIntSlider("Grid Rows")){
+		return;
+	}
+	guiHasChanged = true; // flag that gui has changed
+	
+	
     resolution.x = gui.getIntSlider("Horizontal Resolution");
 	resolution.y = gui.getIntSlider("Vertical Resolution");
     gridSize.x = gui.getIntSlider("Grid Columns");
     gridSize.y = gui.getIntSlider("Grid Rows");
     
     // Generate the quads
-    controlQuads.clear();
+	while (controlQuads.size()) {
+		while (controlQuads[0]->internalQuads.size()) {
+			delete controlQuads[0]->internalQuads[0];
+			controlQuads[0]->internalQuads.erase(controlQuads[0]->internalQuads.begin());
+		}
+		delete controlQuads[0];
+		controlQuads.erase(controlQuads.begin());
+	}
     controlMesh.clearVertices();
     internalMesh.clearVertices();
     
@@ -681,6 +729,14 @@ void Controller::onGridChange(int & value){
 	onCoordinateschange(dummy);
 }
 void Controller::onCoordinateschange(float & value){
+	if(coordinatesStart.x == gui.getFloatSlider("UV Start X")
+	   && coordinatesStart.y == gui.getFloatSlider("UV Start Y")
+	   && coordinatesEnd.x == gui.getFloatSlider("UV End X")
+	   && coordinatesEnd.y == gui.getFloatSlider("UV End Y")){
+		return;
+	}
+	guiHasChanged = true; // flag that gui has changed
+	
     coordinatesStart.x =  gui.getFloatSlider("UV Start X");
     coordinatesStart.y =  gui.getFloatSlider("UV Start Y");
     coordinatesEnd.x =  gui.getFloatSlider("UV End X");
@@ -722,8 +778,19 @@ void Controller::onCoordinateschange(float & value){
     }
 }
 
-void Controller::keyPressed(ofKeyEventArgs & args){}
-void Controller::keyReleased(ofKeyEventArgs & args){}
+void Controller::keyPressed(ofKeyEventArgs & args){
+	if(args.key == 's'){
+		saveHistoryEntry();
+	}
+	if(args.key =='1'){
+		loadHistoryEntry(historyIndex - 1);
+	}
+	if(args.key =='2'){
+		loadHistoryEntry(historyIndex + 1);
+	}
+}
+void Controller::keyReleased(ofKeyEventArgs & args){
+}
 void Controller::mouseMoved(ofMouseEventArgs & args){
 	mouse.set(args.x,args.y);
 }
@@ -735,7 +802,11 @@ void Controller::mouseDragged(ofMouseEventArgs & args){
 	}
 }
 void Controller::mousePressed(ofMouseEventArgs & args){
+	guiHasChanged = false;
+	
+	
 	if(!perspective.isActive()){
+		tempInteractionOffset = interactionOffset;
 		// double click detected
 		if ((ofGetElapsedTimeMillis() - lastClickTime) < 300) {
 			selectVertex(args.x, args.y);
@@ -743,7 +814,17 @@ void Controller::mousePressed(ofMouseEventArgs & args){
 	}
 	lastClickTime = ofGetElapsedTimeMillis();
 }
-void Controller::mouseReleased(ofMouseEventArgs & args){}
+void Controller::mouseReleased(ofMouseEventArgs & args){
+	// detect changes in gui
+	if(guiHasChanged) saveHistoryEntry();
+	
+	if(!perspective.isActive()){
+		// if detect change in vertices, saveHistory
+		if(tempInteractionOffset != interactionOffset){
+			saveHistoryEntry();
+		}
+	}
+}
 
 /*
  this part controls whether events get through to the object or not. if the

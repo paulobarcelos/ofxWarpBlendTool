@@ -3,6 +3,7 @@
 #include "ofxGui.h"
 #include "ofxGlWarper.h"
 
+#define OFX_WARP_BLEND_TOOL_MAX_HISTORY 100
 namespace ofxWarpBlendTool {
 	class SelectablePoint: public ofPoint {
 	public:
@@ -10,8 +11,7 @@ namespace ofxWarpBlendTool {
 			selected = false;
 		}
 		bool selected;
-	};
-	
+	};	
 	class BaseQuad{
 	public:
 		int index;
@@ -24,12 +24,17 @@ namespace ofxWarpBlendTool {
 	public:
 		int x;
 		int y;
-	};
-	
-	
+	};	
 	class ControlQuad : public BaseQuad{
 	public:
 		vector<InternalQuad*> internalQuads;
+	};
+	
+	class HistoryEntry{
+	public:
+		float * verticesData;
+		ofxXmlSettings guiData;
+		ofxXmlSettings perspectiveData;	
 	};
 
 	
@@ -58,12 +63,25 @@ namespace ofxWarpBlendTool {
 		void selectVertex(float mouseX, float mouseY);
 		ofPoint getInteractionOffset(float mouseX, float mouseY);
 		void updateVertices();
-		void saveVertices();
-		void loadVertices();
+		
+		void saveVertices(float * handler);
+		void loadVertices(float * handler);
+		
+		void savePerspective(ofxXmlSettings & handler);
+		void loadPerspective(ofxXmlSettings & handler);
+		
+		void saveGUI(ofxXmlSettings & handler);
+		void loadGUI(ofxXmlSettings & handler);
+		bool guiHasChanged;
+		
+		void saveHistoryEntry();
+		void loadHistoryEntry(unsigned int index);
+		int historyIndex;
+		
+		vector<HistoryEntry* > history;
 		
 		void drawEvent(ofEventArgs& args);
 		bool drawing, drawn;
-		
 		
 		string safe_string(string str) {
 			string safe = str;
@@ -75,7 +93,6 @@ namespace ofxWarpBlendTool {
 			}
 			return safe;
 		}
-
 
 		ofTexture * texture;
 		ofxPanel gui;		
@@ -91,18 +108,19 @@ namespace ofxWarpBlendTool {
 		
 		ofVec2f coordinatesStart;
 		ofVec2f coordinatesEnd;		
-		
 	
 		string name;
 		string guiFile, perspectiveFile, meshFile;
 		int lastClickTime;
 		bool isMovingVertex;
-		ofPoint interactionOffset;
+		ofPoint interactionOffset, tempInteractionOffset;
 		ofVec2f mouse;
 		
 		float blendL, blendR, blendT, blendB;
 		
 		ofFbo guiHelperFbo;
 		ofPoint initialOffset;
+		
+		
 	};
 }
