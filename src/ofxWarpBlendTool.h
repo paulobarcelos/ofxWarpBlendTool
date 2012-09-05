@@ -56,7 +56,7 @@ namespace ofxWarpBlendTool {
 	protected:
 		void onSave(bool & value);
 		void onLoad(bool & value);
-        void onResetPerpective(bool &value);
+        void onResetPerspective(bool &value);
         void onResetMesh(bool &value);
 		void onBlendChange(float & value);
 		void onGridChange(int & value);
@@ -69,9 +69,11 @@ namespace ofxWarpBlendTool {
 		ofPoint getInteractionOffset(float mouseX, float mouseY);
 		void updateVertices();
 		
+        void resetVertices(bool saveInHistory = true);
 		void saveVertices(float * handler);
 		void loadVertices(float * handler);
 		
+        void resetPerspective(bool saveInHistory = true);
 		void savePerspective(ofxXmlSettings & handler);
 		void loadPerspective(ofxXmlSettings & handler);
         bool perspectiveHasChanged;

@@ -61,6 +61,16 @@ void Controller::setup(ofTexture * texture, string name, float guiWidth, ofPoint
     enablePerspective->addListener(this, &Controller::onEnablePerpective);
     gui.add(enablePerspective);
     
+    ofxButton * resetPerpective = new ofxButton();
+    resetPerpective->setup("Reset Perpective", guiWidth);
+    resetPerpective->addListener(this, &Controller::onResetPerspective);
+    gui.add(resetPerpective);
+    
+    ofxButton * resetMesh = new ofxButton();
+    resetMesh->setup("Reset Mesh", guiWidth);
+    resetMesh->addListener(this, &Controller::onResetMesh);
+    gui.add(resetMesh);
+    
     ofxIntSlider * resolutionX = new ofxIntSlider();
     resolutionX->setup("Horizontal Resolution", 4, 1, 20, guiWidth);
     resolutionX->addListener(this, &Controller::onGridChange);
@@ -201,7 +211,10 @@ void Controller::drawGui(){
 		ofNoFill();
 		ofSetColor(255);
 		ofRect(0, 0, texture->getWidth(), texture->getHeight());
-		
+		ofPopStyle();
+        
+        ofPushStyle();
+        ofSetColor(255,255,0);
 		glPointSize(10);
 		glBegin(GL_POINTS);
 		glVertex3f(0, 0, 0);
@@ -213,8 +226,7 @@ void Controller::drawGui(){
 		ofPopStyle();
 	}
 	else{
-		glPointSize(2);
-		internalMesh.drawVertices();
+		internalMesh.drawWireframe();
 		glPointSize(10);
 		controlMesh.drawVertices();
 		glPointSize(2);
@@ -277,10 +289,10 @@ void Controller::selectVertex(float mouseX, float mouseY){
 				c_vertex->selected = !c_vertex->selected;
 				if(c_vertex->selected){
 					emptySelection = false;
-					controlMesh.setColor(index, ofFloatColor(1.0,1.0,0.0,1.0));
+					controlMesh.setColor(index, ofFloatColor(1.0,0.0,1.0,1.0));
 				}
 				else{
-					controlMesh.setColor(index, ofFloatColor(1.0,1.0,1.0,1.0));
+					controlMesh.setColor(index, ofFloatColor(1.0,1.0,0.0,1.0));
 				}
 			}
 		}
@@ -299,7 +311,7 @@ void Controller::selectVertex(float mouseX, float mouseY){
 				ofRectangle handle( c_vertex->x - 25, c_vertex->y - 25, 50, 50 );
 				
 				c_vertex->selected = false;
-				controlMesh.setColor(index, ofFloatColor(1.0,1.0,1.0,1.0));
+				controlMesh.setColor(index, ofFloatColor(1.0,1.0,0.0,1.0));
 			}
 		}
 	}
@@ -395,6 +407,17 @@ void Controller::updateVertices(){
 	
 }
 
+void Controller::resetVertices(bool saveInHistory){
+    // trick to reset vertices is to fake something has changed and call onGridChange
+    gridSize.x = -1;
+    int dummy = 0;
+    onGridChange(dummy);
+    
+    //unset the gui change flag
+    guiHasChanged = false;
+    
+    if(saveInHistory)saveHistoryEntry();
+}
 void Controller::saveVertices(float * handler){
 	int i = 0;
 	for (int c_i = 0; c_i <controlQuads.size(); c_i++) {
@@ -468,6 +491,28 @@ void Controller::loadVertices(float * handler){
 	}
 }
 
+void Controller::resetPerspective(bool saveInHistory){
+    ofxXmlSettings perspectiveSettings;
+    perspectiveSettings.clear();
+    perspectiveSettings.addTag("corners");
+    perspectiveSettings.pushTag("corners");
+    perspectiveSettings.addTag("corner");
+    float offX = initialOffset.x/texture->getWidth();
+    float offY = initialOffset.y/texture->getHeight();
+    perspectiveSettings.setValue("corner:x",offX , 0);
+    perspectiveSettings.setValue("corner:y",offY, 0);
+    perspectiveSettings.setValue("corner:x",offX + 1.0, 1);
+    perspectiveSettings.setValue("corner:y",offY, 1);
+    perspectiveSettings.setValue("corner:x",offX + 1.0, 2);
+    perspectiveSettings.setValue("corner:y",offY + 1.0, 2);
+    perspectiveSettings.setValue("corner:x",offX, 3);
+    perspectiveSettings.setValue("corner:y",offY + 1.0, 3);
+    perspectiveSettings.popTag();
+    
+    loadPerspective(perspectiveSettings);
+    
+    if(saveInHistory)saveHistoryEntry();
+}
 void Controller::savePerspective(ofxXmlSettings & handler){
 	perspective.saveToXml(handler);
 }
@@ -559,29 +604,13 @@ void Controller::onSave(bool &value){
 }
 void Controller::onLoad(bool &value){
 	if(value){
-		// Check if there is no saved file, if not, apply initial offset
+		// Check if there is no saved file, if not reset
 		ofxXmlSettings perspectiveSettings;
 		if(perspectiveSettings.loadFile(perspectiveFile)){
 			loadPerspective(perspectiveSettings);
 		}
 		else{
-			perspectiveSettings.clear();
-			perspectiveSettings.addTag("corners");
-			perspectiveSettings.pushTag("corners");
-			perspectiveSettings.addTag("corner");
-			float offX = initialOffset.x/texture->getWidth();
-			float offY = initialOffset.y/texture->getHeight();
-			perspectiveSettings.setValue("corner:x",offX , 0);
-			perspectiveSettings.setValue("corner:y",offY, 0);
-			perspectiveSettings.setValue("corner:x",offX + 1.0, 1);
-			perspectiveSettings.setValue("corner:y",offY, 1);
-			perspectiveSettings.setValue("corner:x",offX + 1.0, 2);
-			perspectiveSettings.setValue("corner:y",offY + 1.0, 2);
-			perspectiveSettings.setValue("corner:x",offX, 3);
-			perspectiveSettings.setValue("corner:y",offY + 1.0, 3);
-			perspectiveSettings.popTag();
-
-			loadPerspective(perspectiveSettings);			
+			resetPerspective(false); // false means we wont generate a history entry
 		}
 		
 		ofxXmlSettings guiSettings;
@@ -610,6 +639,16 @@ void Controller::onLoad(bool &value){
 		// Save initial history entry
 		saveHistoryEntry();
 		
+	}
+}
+void Controller::onResetPerspective(bool &value){
+	if(value){
+        resetPerspective();
+	}
+}
+void Controller::onResetMesh(bool &value){
+	if(value){
+        resetVertices();
 	}
 }
 void Controller::onBlendChange(float & value){
@@ -686,10 +725,10 @@ void Controller::onGridChange(int & value){
             controlMesh.addVertex(c_quad->TR);
             controlMesh.addVertex(c_quad->BR);
             
-            controlMesh.addColor(ofFloatColor(1.0,1.0,1.0,1.0));
-            controlMesh.addColor(ofFloatColor(1.0,1.0,1.0,1.0));
-            controlMesh.addColor(ofFloatColor(1.0,1.0,1.0,1.0));
-            controlMesh.addColor(ofFloatColor(1.0,1.0,1.0,1.0));
+            controlMesh.addColor(ofFloatColor(1.0,1.0,0.0,1.0));
+            controlMesh.addColor(ofFloatColor(1.0,1.0,0.0,1.0));
+            controlMesh.addColor(ofFloatColor(1.0,1.0,0.0,1.0));
+            controlMesh.addColor(ofFloatColor(1.0,1.0,0.0,1.0));
             
             c_index+=4;
             
@@ -793,7 +832,7 @@ void Controller::keyPressed(ofKeyEventArgs & args){
     bool undo = false;
     bool redo = false;
 #ifdef TARGET_OSX
-    if(args.key =='z'){
+    if(args.key =='z' || args.key =='Z'){
         if (ofGetModifierPressed(OF_KEY_SPECIAL)){
             if(ofGetModifierPressed(OF_KEY_SHIFT)){
                 redo = true;
@@ -805,7 +844,7 @@ void Controller::keyPressed(ofKeyEventArgs & args){
     }
 #endif
 #ifdef TARGET_LINUX
-    if(args.key =='z'){
+    if(args.key =='z' || args.key =='Z'){
         if (ofGetModifierPressed(OF_KEY_CTRL)){
             if(ofGetModifierPressed(OF_KEY_SHIFT)){
                 redo = true;
@@ -817,7 +856,7 @@ void Controller::keyPressed(ofKeyEventArgs & args){
     }
 #endif
 #ifdef TARGET_WIN32
-    if(args.key =='z'){
+    if(args.key =='z' || args.key =='Z'){
         if (ofGetModifierPressed(OF_KEY_CTRL)){
             if(ofGetModifierPressed(OF_KEY_SHIFT)){
                 redo = true;
@@ -827,7 +866,7 @@ void Controller::keyPressed(ofKeyEventArgs & args){
             }
         }
     }
-    if(args.key =='y'){
+    if(args.key =='y' || args.key =='Y'){
         if (ofGetModifierPressed(OF_KEY_CTRL)){
             redo = true;   
         }
@@ -841,23 +880,23 @@ void Controller::keyPressed(ofKeyEventArgs & args){
     bool save = false;
     
 #ifdef TARGET_OSX
-    if(args.key =='r'){
+    if(args.key =='r' || args.key =='R'){
         if (ofGetModifierPressed(OF_KEY_SPECIAL)){
             load = true;
         }
     }
-    if(args.key =='s'){
+    if(args.key =='s' || args.key =='R'){
         if (ofGetModifierPressed(OF_KEY_SPECIAL)){
             save = true;
         }
     }
 #else
-    if(args.key =='r'){
+    if(args.key =='r' || args.key =='S'){
         if (ofGetModifierPressed(OF_KEY_CTRL)){
             load = true;
         }
     }
-    if(args.key =='s'){
+    if(args.key =='s' || args.key =='S'){
         if (ofGetModifierPressed(OF_KEY_CTRL)){
             save = true;
         }
