@@ -12,6 +12,9 @@
 		1cd33e884d9e3358252e82a14dc97644 /* ofxToggle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 907c5b5e104864a2d3a2574573796b13 /* ofxToggle.cpp */; };
 		1d5f3298c2fa073628012944b1efde88 /* ofxCvContourFinder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = c76de5c29bdbd2caa1dd0021a7376220 /* ofxCvContourFinder.cpp */; };
 		250a95ba26587be85db0a353e6e1dea2 /* ofxCvColorImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ce9c7160245b19131dae61282ee6cb53 /* ofxCvColorImage.cpp */; };
+		2DF27BB715F758140093839D /* ofxModifierKeys_impl_linux.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DF27BAC15F758140093839D /* ofxModifierKeys_impl_linux.cpp */; };
+		2DF27BB815F758140093839D /* ofxModifierKeys_impl_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2DF27BAD15F758140093839D /* ofxModifierKeys_impl_mac.mm */; };
+		2DF27BB915F758140093839D /* ofxModifierKeys_impl_win.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2DF27BAE15F758140093839D /* ofxModifierKeys_impl_win.cpp */; };
 		483908258d00b98b4be69f0765fb3433 /* ofxLabel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 78d67a00eb899fac0943059784f8212a /* ofxLabel.cpp */; };
 		4e847d04587ae2fa1597e2f4fe9fe62a /* ofxGLWarper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = af6209c5f82972d99de8a1d280ac6b13 /* ofxGLWarper.cpp */; };
 		5a4349e9754d6fa14c0f2a3a1abc30b6 /* tinyxmlparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = fc5da1c87211d4f6377da7199d8c5a1e /* tinyxmlparser.cpp */; };
@@ -92,6 +95,10 @@
 		1e95efd35ed9c5d97f2f015ed292592d /* timer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = timer.h; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/flann/timer.h; sourceTree = SOURCE_ROOT; };
 		24d6364482cec6084c09a958c02ac972 /* ofxWarpBlendTool.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxWarpBlendTool.h; path = ../../../addons/ofxWarpBlendTool/src/ofxWarpBlendTool.h; sourceTree = SOURCE_ROOT; };
 		2834d88a62cd23f3de2c47d1c39bd645 /* ofxButton.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxButton.h; path = ../../../addons/ofxGui/src/ofxButton.h; sourceTree = SOURCE_ROOT; };
+		2DF27BAB15F758140093839D /* ofxModifierKeys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxModifierKeys.h; sourceTree = "<group>"; };
+		2DF27BAC15F758140093839D /* ofxModifierKeys_impl_linux.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxModifierKeys_impl_linux.cpp; sourceTree = "<group>"; };
+		2DF27BAD15F758140093839D /* ofxModifierKeys_impl_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ofxModifierKeys_impl_mac.mm; sourceTree = "<group>"; };
+		2DF27BAE15F758140093839D /* ofxModifierKeys_impl_win.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxModifierKeys_impl_win.cpp; sourceTree = "<group>"; };
 		2b40eda85beb63e46785bc299a638898 /* tinyxml.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = tinyxml.cpp; path = ../../../addons/ofxXmlSettings/libs/tinyxml.cpp; sourceTree = SOURCE_ROOT; };
 		2e411f99e3ab7154484b4f96165f5cff /* kmeans_index.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = kmeans_index.h; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/flann/kmeans_index.h; sourceTree = SOURCE_ROOT; };
 		30884ecd9c171ab1b1bdfc3f6449c692 /* cv.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = cv.hpp; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv/cv.hpp; sourceTree = SOURCE_ROOT; };
@@ -348,6 +355,26 @@
 			name = ofxXmlSettings;
 			sourceTree = "<group>";
 		};
+		2DF27B9715F758140093839D /* ofxModifierKeys */ = {
+			isa = PBXGroup;
+			children = (
+				2DF27BAA15F758140093839D /* src */,
+			);
+			name = ofxModifierKeys;
+			path = ../../ofxModifierKeys;
+			sourceTree = "<group>";
+		};
+		2DF27BAA15F758140093839D /* src */ = {
+			isa = PBXGroup;
+			children = (
+				2DF27BAB15F758140093839D /* ofxModifierKeys.h */,
+				2DF27BAC15F758140093839D /* ofxModifierKeys_impl_linux.cpp */,
+				2DF27BAD15F758140093839D /* ofxModifierKeys_impl_mac.mm */,
+				2DF27BAE15F758140093839D /* ofxModifierKeys_impl_win.cpp */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
 		3d67ebffa650835026c93e521c6dbdc4 /* src */ = {
 			isa = PBXGroup;
 			children = (
@@ -472,6 +499,7 @@
 		BB4B014C10F69532006C3DED /* addons */ = {
 			isa = PBXGroup;
 			children = (
+				2DF27B9715F758140093839D /* ofxModifierKeys */,
 				ad7814744533132e24c1fa28ec179acf /* ofxGLWarper */,
 				480a780d8d0308ae4a3688014739cb6d /* ofxGui */,
 				a0b90d3b0adb9c1716816714bf7f212b /* ofxOpenCv */,
@@ -794,6 +822,9 @@
 				933a2227713c720ceff80fd967d0a8ee /* tinyxml.cpp in Sources */,
 				9d44dc88ef9e7991b4a09951e2e4769f /* tinyxmlerror.cpp in Sources */,
 				5a4349e9754d6fa14c0f2a3a1abc30b6 /* tinyxmlparser.cpp in Sources */,
+				2DF27BB715F758140093839D /* ofxModifierKeys_impl_linux.cpp in Sources */,
+				2DF27BB815F758140093839D /* ofxModifierKeys_impl_mac.mm in Sources */,
+				2DF27BB915F758140093839D /* ofxModifierKeys_impl_win.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

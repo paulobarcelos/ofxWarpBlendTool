@@ -15,25 +15,28 @@ void Controller::setup(ofTexture * texture, string name, float guiWidth, ofPoint
 	blendB = blendL = blendR = blendT = 0;
 	lastClickTime = ofGetElapsedTimeMillis();
 	historyIndex = -1;
+    guiHasChanged = false;
+    perspectiveHasChanged = false;
 
 	// Generate filenames
-	string safename = safe_string(name);
+	safename = safe_string(name);
 	stringstream ss_guiFile;
-	ss_guiFile << safename << "_gui.xml";	
+	ss_guiFile << safename << "/gui.xml";	
 	guiFile = ss_guiFile.str();
 	
 	stringstream ss_perspectiveFile;
-	ss_perspectiveFile << safename << "_perspective.xml";
+	ss_perspectiveFile << safename << "/perspective.xml";
 	perspectiveFile = ss_perspectiveFile.str();
 	
 	stringstream ss_meshFile;
-	ss_meshFile << safename << "_mesh";
+	ss_meshFile << safename << "/mesh";
 	meshFile = ss_meshFile.str();
 	
 	// Perpective
     perspective.setup(0, 0, texture->getWidth(), texture->getHeight());
     perspective.setCornerSensibility(0.02);
     perspective.deactivate();
+    ofAddListener(perspective.changeEvent, this, &Controller::onPerspectiveChange);
     
 	// Meshes
     controlMesh.setMode(OF_PRIMITIVE_POINTS);
@@ -80,22 +83,22 @@ void Controller::setup(ofTexture * texture, string name, float guiWidth, ofPoint
     
     ofxFloatSlider * startX = new ofxFloatSlider();
     startX->setup("UV Start X", 0, 0, texture->getWidth(), guiWidth);
-    startX->addListener(this, &Controller::onCoordinateschange);
+    startX->addListener(this, &Controller::onCoordinatesChange);
     gui.add(startX);
     
     ofxFloatSlider * startY = new ofxFloatSlider();
     startY->setup("UV Start Y", 0, 0, texture->getHeight(), guiWidth);
-    startY->addListener(this, &Controller::onCoordinateschange);
+    startY->addListener(this, &Controller::onCoordinatesChange);
     gui.add(startY);
     
     ofxFloatSlider * endX = new ofxFloatSlider();
     endX->setup("UV End X", texture->getWidth(), 0, texture->getWidth(), guiWidth);
-    endX->addListener(this, &Controller::onCoordinateschange);
+    endX->addListener(this, &Controller::onCoordinatesChange);
     gui.add(endX);
     
     ofxFloatSlider * endY = new ofxFloatSlider();
     endY->setup("UV End Y", texture->getHeight(), 0, texture->getHeight(), guiWidth);
-    endY->addListener(this, &Controller::onCoordinateschange);
+    endY->addListener(this, &Controller::onCoordinatesChange);
     gui.add(endY);
 	
 	ofxFloatSlider * blendTSlider = new ofxFloatSlider();
@@ -118,9 +121,10 @@ void Controller::setup(ofTexture * texture, string name, float guiWidth, ofPoint
     blendRSlider->addListener(this, &Controller::onBlendChange);
     gui.add(blendRSlider);
 	
-	ofxIntSlider * lineThickess = new ofxIntSlider();
-    lineThickess->setup("GUI Lines Thickness", 1, 1, 10, guiWidth);
-    gui.add(lineThickess);
+	ofxIntSlider * lineThickness = new ofxIntSlider();
+    lineThickness->setup("GUI Lines Thickness", 1, 1, 10, guiWidth);
+    lineThickness->addListener(this, &Controller::onGuiLinesThicknessChange);
+    gui.add(lineThickness);
     
 	
 	// load settings
@@ -180,7 +184,7 @@ void Controller::drawGui(){
 	drawn = true; // for the enable/disable magic
 	
 	ofPushStyle();
-	ofSetLineWidth(gui.getIntSlider("GUI Lines Thickness"));
+	ofSetLineWidth(guiLineThickness);
     
 	perspective.begin();
 	ofPushStyle();
@@ -502,7 +506,7 @@ void Controller::saveHistoryEntry(){
 	// delete any "newer" history
 	while (history.size() > historyIndex+1) {
 		delete history[history.size()-1];
-		history.erase(history.end());
+		history.pop_back();
 	}
 	// pushback and increase index
 	history.push_back(entry);
@@ -514,9 +518,11 @@ void Controller::saveHistoryEntry(){
 		history.erase(history.begin());
 	}
 }
-void Controller::loadHistoryEntry(unsigned int index){
+void Controller::loadHistoryEntry(int index){
 	if(!history.size()) return;
-	if (index > history.size()-1) index = history.size()-1;
+    if(index < 0) index = 0;
+	else if(index > history.size()-1) index = history.size()-1;
+    if(historyIndex == index) return;
 	historyIndex = index;
 	
 	HistoryEntry* entry = history[index];
@@ -527,6 +533,8 @@ void Controller::loadHistoryEntry(unsigned int index){
 
 void Controller::onSave(bool &value){
 	if(value){
+        ofDirectory::createDirectory(safename, true, true);
+        
 		ofxXmlSettings perspectiveSettings;
 		savePerspective(perspectiveSettings);
 		perspectiveSettings.saveFile(perspectiveFile);
@@ -726,15 +734,10 @@ void Controller::onGridChange(int & value){
     
     // Generate the coordinates;
     float dummy = 0;
-	onCoordinateschange(dummy);
+	onCoordinatesChange(dummy);
 }
-void Controller::onCoordinateschange(float & value){
-	if(coordinatesStart.x == gui.getFloatSlider("UV Start X")
-	   && coordinatesStart.y == gui.getFloatSlider("UV Start Y")
-	   && coordinatesEnd.x == gui.getFloatSlider("UV End X")
-	   && coordinatesEnd.y == gui.getFloatSlider("UV End Y")){
-		return;
-	}
+void Controller::onCoordinatesChange(float & value){
+	
 	guiHasChanged = true; // flag that gui has changed
 	
     coordinatesStart.x =  gui.getFloatSlider("UV Start X");
@@ -777,17 +780,93 @@ void Controller::onCoordinateschange(float & value){
         }
     }
 }
+void Controller::onGuiLinesThicknessChange(int &value){
+    guiHasChanged = true; // flag that gui has changed
+    guiLineThickness = value;
+}
+void Controller::onPerspectiveChange(ofxGLWarper::CornerLocation & cornerLocation){
+    perspectiveHasChanged = true;
+}
 
 void Controller::keyPressed(ofKeyEventArgs & args){
-	if(args.key == 's'){
-		saveHistoryEntry();
-	}
-	if(args.key =='1'){
-		loadHistoryEntry(historyIndex - 1);
-	}
-	if(args.key =='2'){
-		loadHistoryEntry(historyIndex + 1);
-	}
+    // UNDO/REDO
+    bool undo = false;
+    bool redo = false;
+#ifdef TARGET_OSX
+    if(args.key =='z'){
+        if (ofGetModifierPressed(OF_KEY_SPECIAL)){
+            if(ofGetModifierPressed(OF_KEY_SHIFT)){
+                redo = true;
+            }
+            else{
+                undo = true;
+            }
+        }
+    }
+#endif
+#ifdef TARGET_LINUX
+    if(args.key =='z'){
+        if (ofGetModifierPressed(OF_KEY_CTRL)){
+            if(ofGetModifierPressed(OF_KEY_SHIFT)){
+                redo = true;
+            }
+            else{
+                undo = true;
+            }
+        }
+    }
+#endif
+#ifdef TARGET_WIN32
+    if(args.key =='z'){
+        if (ofGetModifierPressed(OF_KEY_CTRL)){
+            if(ofGetModifierPressed(OF_KEY_SHIFT)){
+                redo = true;
+            }
+            else{
+                undo = true;
+            }
+        }
+    }
+    if(args.key =='y'){
+        if (ofGetModifierPressed(OF_KEY_CTRL)){
+            redo = true;   
+        }
+    }
+#endif
+    if(undo) loadHistoryEntry(historyIndex - 1);
+    if(redo) loadHistoryEntry(historyIndex + 1);
+    
+    // SAVE/LOAD
+    bool load = false;
+    bool save = false;
+    
+#ifdef TARGET_OSX
+    if(args.key =='r'){
+        if (ofGetModifierPressed(OF_KEY_SPECIAL)){
+            load = true;
+        }
+    }
+    if(args.key =='s'){
+        if (ofGetModifierPressed(OF_KEY_SPECIAL)){
+            save = true;
+        }
+    }
+#else
+    if(args.key =='r'){
+        if (ofGetModifierPressed(OF_KEY_CTRL)){
+            load = true;
+        }
+    }
+    if(args.key =='s'){
+        if (ofGetModifierPressed(OF_KEY_CTRL)){
+            save = true;
+        }
+    }
+#endif
+    bool dummy = true;
+    if(load) onLoad(dummy);
+    if(save) onSave(dummy);
+    
 }
 void Controller::keyReleased(ofKeyEventArgs & args){
 }
@@ -802,9 +881,6 @@ void Controller::mouseDragged(ofMouseEventArgs & args){
 	}
 }
 void Controller::mousePressed(ofMouseEventArgs & args){
-	guiHasChanged = false;
-	
-	
 	if(!perspective.isActive()){
 		tempInteractionOffset = interactionOffset;
 		// double click detected
@@ -817,6 +893,11 @@ void Controller::mousePressed(ofMouseEventArgs & args){
 void Controller::mouseReleased(ofMouseEventArgs & args){
 	// detect changes in gui
 	if(guiHasChanged) saveHistoryEntry();
+    guiHasChanged = false;
+    
+    // detect change in perspective
+    if(perspectiveHasChanged) saveHistoryEntry();
+    perspectiveHasChanged = false;
 	
 	if(!perspective.isActive()){
 		// if detect change in vertices, saveHistory
@@ -824,6 +905,8 @@ void Controller::mouseReleased(ofMouseEventArgs & args){
 			saveHistoryEntry();
 		}
 	}
+    
+    
 }
 
 /*

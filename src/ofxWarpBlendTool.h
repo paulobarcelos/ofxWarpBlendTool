@@ -2,6 +2,7 @@
 #include "ofMain.h"
 #include "ofxGui.h"
 #include "ofxGlWarper.h"
+#include "ofxModifierKeys.h"
 
 #define OFX_WARP_BLEND_TOOL_MAX_HISTORY 100
 namespace ofxWarpBlendTool {
@@ -55,10 +56,14 @@ namespace ofxWarpBlendTool {
 	protected:
 		void onSave(bool & value);
 		void onLoad(bool & value);
+        void onResetPerpective(bool &value);
+        void onResetMesh(bool &value);
 		void onBlendChange(float & value);
 		void onGridChange(int & value);
-		void onCoordinateschange(float & value);
+		void onCoordinatesChange(float & value);
 		void onEnablePerpective(bool & value);
+        void onGuiLinesThicknessChange(int & value);
+        void onPerspectiveChange(ofxGLWarper::CornerLocation & cornerLocation);
 		
 		void selectVertex(float mouseX, float mouseY);
 		ofPoint getInteractionOffset(float mouseX, float mouseY);
@@ -69,32 +74,23 @@ namespace ofxWarpBlendTool {
 		
 		void savePerspective(ofxXmlSettings & handler);
 		void loadPerspective(ofxXmlSettings & handler);
+        bool perspectiveHasChanged;
 		
 		void saveGUI(ofxXmlSettings & handler);
 		void loadGUI(ofxXmlSettings & handler);
 		bool guiHasChanged;
 		
 		void saveHistoryEntry();
-		void loadHistoryEntry(unsigned int index);
+		void loadHistoryEntry(int index);
 		int historyIndex;
 		
 		vector<HistoryEntry* > history;
 		
 		void drawEvent(ofEventArgs& args);
-		bool drawing, drawn;
-		
-		string safe_string(string str) {
-			string safe = str;
-			for (int i = 0; i < strlen(str.c_str()); i++) {
-				if (isalpha(str[i]))
-					safe[i] = str[i];
-				else
-					safe[i] = '_';
-			}
-			return safe;
-		}
+		bool drawing, drawn;		
 
 		ofTexture * texture;
+        ofPoint initialOffset;
 		ofxPanel gui;		
 		ofxGLWarper perspective;
 				
@@ -105,22 +101,33 @@ namespace ofxWarpBlendTool {
 		
 		ofVec2f gridSize;
 		ofVec2f resolution;
-		
+        		
 		ofVec2f coordinatesStart;
-		ofVec2f coordinatesEnd;		
+		ofVec2f coordinatesEnd;
+        
+        float blendL, blendR, blendT, blendB;
+        int guiLineThickness;
 	
-		string name;
+		string name, safename;
 		string guiFile, perspectiveFile, meshFile;
 		int lastClickTime;
 		bool isMovingVertex;
 		ofPoint interactionOffset, tempInteractionOffset;
 		ofVec2f mouse;
-		
-		float blendL, blendR, blendT, blendB;
-		
+				
 		ofFbo guiHelperFbo;
-		ofPoint initialOffset;
+        
+    
 		
-		
+		static string safe_string(string str) {
+			string safe = str;
+			for (int i = 0; i < strlen(str.c_str()); i++) {
+				if (isalpha(str[i]))
+					safe[i] = str[i];
+				else
+					safe[i] = '_';
+			}
+			return safe;
+		}
 	};
 }

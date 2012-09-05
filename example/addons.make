@@ -1,6 +1,7 @@
 ofxGLWarper
 ofxGui
 ofxOpenCv
+ofxModifierKeys
 ofxTimeMeasurements
 ofxWarpBlendTool
 ofxXmlSettings
