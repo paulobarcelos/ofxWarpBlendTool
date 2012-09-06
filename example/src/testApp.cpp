@@ -4,25 +4,37 @@
 void testApp::setup(){	
     ofBackground(0, 0, 0);
     
+    // We will use this flag to decide if we should draw the GUI or not
+    drawGui = true;    
+    
+    // Pointer to the texture
     testcard.loadImage("testcard.png");
+    ofTexture * texture = &(testcard.getTextureReference());    
     
-	/*controller.setup(// pointer to the texture
-                     &(testcard.getTextureReference()),
-                     // (optional) name of the panel/save folder ("Warp/Blend")
-                     "Warp/Blend",
-                     //(optional) drawing offset (default = ofPoint(0,0))
-                     ofPoint(ofGetScreenWidth()/2 - testcard.getWidth()/2,ofGetScreenHeight()/2 - testcard.getHeight()/2),
-                     // (optional) width of GUI (default = 300)
-                     200
-                     );*/
+    // Subsection of the texture coordinates
+    ofRectangle subsection(texture->getWidth()/2, 0,texture->getWidth()/2, texture->getHeight());
     
-    //controller.setup(&(testcard.getTextureReference()));
-    ofTexture * texture = &(testcard.getTextureReference());
-    controller.setup(texture,
-                     ofRectangle(texture->getWidth()/2, 0,texture->getWidth()/2, texture->getHeight()));
+    // Inital perspective corners position (order is top-left, top-right, bottom-left, bottom-right).
+    // In this example, let's position it agains the right corner of the screen.
+    ofPoint corners[4];
+    corners[0].x = ofGetWidth() - texture->getWidth();
+    corners[0].y = 0;
+    corners[1].x = ofGetWidth();
+    corners[1].y = 0;
+    corners[2].x = ofGetWidth();
+    corners[2].y = texture->getHeight();
+    corners[3].x = ofGetWidth() - texture->getWidth();
+    corners[3].y = texture->getHeight();
     
-    drawGui = true;
+    // Name for the controller panel (this will also define the folder in which the data will be saved)
+    string name = "Warp/Blend";
     
+    // Size of the GUI elements (a wider GUI gives your more precision to control the texture coordinates)
+    float guiWidth = 250;
+    float guiHeight = 15;
+    
+    // Setup!
+    controller.setup(texture, subsection, corners, name, guiWidth, guiHeight);
 }
 
 //--------------------------------------------------------------
