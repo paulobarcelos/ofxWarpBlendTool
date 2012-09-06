@@ -6,15 +6,20 @@ void testApp::setup(){
     
     testcard.loadImage("testcard.png");
     
-	controller.setup(// pointer to the texture
+	/*controller.setup(// pointer to the texture
                      &(testcard.getTextureReference()),
                      // (optional) name of the panel/save folder ("Warp/Blend")
                      "Warp/Blend",
+                     //(optional) drawing offset (default = ofPoint(0,0))
+                     ofPoint(ofGetScreenWidth()/2 - testcard.getWidth()/2,ofGetScreenHeight()/2 - testcard.getHeight()/2),
                      // (optional) width of GUI (default = 300)
-                     200,
-                      //(optional) drawing offset (default = ofPoint(0,0))
-                     ofPoint(ofGetScreenWidth()/2 - testcard.getWidth()/2,ofGetScreenHeight()/2 - testcard.getHeight()/2)
-                     );
+                     200
+                     );*/
+    
+    //controller.setup(&(testcard.getTextureReference()));
+    ofTexture * texture = &(testcard.getTextureReference());
+    controller.setup(texture,
+                     ofRectangle(texture->getWidth()/2, 0,texture->getWidth()/2, texture->getHeight()));
     
     drawGui = true;
     

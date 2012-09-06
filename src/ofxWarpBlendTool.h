@@ -42,7 +42,10 @@ namespace ofxWarpBlendTool {
 	class Controller{
 		
 	public:
-		void setup(ofTexture * texture, string name = "Warp/Blend", float guiWidth = 400, ofPoint initialOffset = ofPoint(0,0));
+        Controller();
+        void setup(ofTexture * texture, ofRectangle originalCoordinates = defaultOriginalCoordinates, ofPoint originalPerspective[4] = (ofPoint*)defaultOriginalPerspective, string name = defaultName, float guiWidth = defaultGuiWidth, float guiHeight = defaultGuiHeight);
+       
+        void setTexture(ofTexture * texture);
 		void draw();
 		void drawGui();
 		
@@ -52,8 +55,28 @@ namespace ofxWarpBlendTool {
 		void mouseDragged(ofMouseEventArgs & args);
 		void mousePressed(ofMouseEventArgs & args);
 		void mouseReleased(ofMouseEventArgs & args);
+        
+        float getWindowWidth();
+        float getWindowHeight();
+        
+        static const string defaultName;
+        static const ofRectangle defaultOriginalCoordinates;
+        static const ofPoint defaultOriginalPerspective[4];
+        static const float defaultGuiWidth;
+        static const float defaultGuiHeight;
+        
 		
 	protected:
+        ofTexture * texture;
+        string name;
+        ofRectangle originalCoordinates;
+        ofPoint originalPerspective[4];
+        float guiWidth;
+        float guiHeight;
+        
+        string safename;
+        string guiFile, perspectiveFile, meshFile;
+        
 		void onSave(bool & value);
 		void onLoad(bool & value);
         void onResetPerspective(bool &value);
@@ -61,7 +84,7 @@ namespace ofxWarpBlendTool {
 		void onBlendChange(float & value);
 		void onGridChange(int & value);
 		void onCoordinatesChange(float & value);
-		void onEnablePerpective(bool & value);
+		void onEnablePerspective(bool & value);
         void onGuiLinesThicknessChange(int & value);
         void onPerspectiveChange(ofxGLWarper::CornerLocation & cornerLocation);
 		
@@ -84,15 +107,15 @@ namespace ofxWarpBlendTool {
 		
 		void saveHistoryEntry();
 		void loadHistoryEntry(int index);
-		int historyIndex;
-		
+		int historyIndex;		
 		vector<HistoryEntry* > history;
 		
 		void drawEvent(ofEventArgs& args);
 		bool drawing, drawn;		
 
-		ofTexture * texture;
+		
         ofPoint initialOffset;
+        
 		ofxPanel gui;		
 		ofxGLWarper perspective;
 				
@@ -110,8 +133,8 @@ namespace ofxWarpBlendTool {
         float blendL, blendR, blendT, blendB;
         int guiLineThickness;
 	
-		string name, safename;
-		string guiFile, perspectiveFile, meshFile;
+
+		
 		int lastClickTime;
 		bool isMovingVertex;
 		ofPoint interactionOffset, tempInteractionOffset;
@@ -124,7 +147,7 @@ namespace ofxWarpBlendTool {
 		static string safe_string(string str) {
 			string safe = str;
 			for (int i = 0; i < strlen(str.c_str()); i++) {
-				if (isalpha(str[i]))
+				if (isalnum(str[i]))
 					safe[i] = str[i];
 				else
 					safe[i] = '_';
@@ -132,4 +155,7 @@ namespace ofxWarpBlendTool {
 			return safe;
 		}
 	};
+    
+    
+    
 }
