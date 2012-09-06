@@ -1,16 +1,65 @@
 #include "ofxWarpBlendTool.h"
 using namespace ofxWarpBlendTool;
 
-//--------------------------------------------------------------
-void Controller::setup(ofTexture * texture, string name, float guiWidth, ofPoint initialOffset){
+const string Controller::defaultName = "Warp/Blend";
+const ofRectangle Controller::defaultOriginalCoordinates = ofRectangle(0,0,0,0); // so we can set to texture measurements on runtime
+const ofPoint Controller::defaultOriginalPerspective[4] = {ofPoint(),ofPoint(),ofPoint(),ofPoint()}; // so we can set to texture measurements on runtime
+const float Controller::defaultGuiWidth = 250;
+const float Controller::defaultGuiHeight = 15;
+
+Controller::Controller(){
+    texture = NULL;
+    name = defaultName;
+    originalCoordinates = defaultOriginalCoordinates;
+    memcpy (originalPerspective,defaultOriginalPerspective,sizeof(ofPoint)*4);
+    guiWidth = defaultGuiWidth;
+    guiHeight = defaultGuiHeight;
+}
+void Controller::setTexture(ofTexture * texture){
+    bool needsSetup = false;
+    if(!this->texture){
+        needsSetup = true;
+    }
+    else if(this->texture->getWidth() != texture->getWidth() || this->texture->getHeight() != texture->getHeight()){
+        needsSetup = true;
+    }
+    if(needsSetup) setup(texture, originalCoordinates, originalPerspective, name, guiWidth, guiHeight);
+    else this->texture = texture;
+}
+void Controller::setup(ofTexture * texture, ofRectangle originalCoordinates, ofPoint originalPerspective[4], string name, float guiWidth, float guiHeight ){
+    // Arguments
+    this->texture = texture;
+	this->name = name;
+    this->guiWidth = guiWidth;
+    this->guiHeight = guiHeight;
+    if(originalCoordinates.x==0
+       && originalCoordinates.y==0
+       && originalCoordinates.width==0
+       && originalCoordinates.height==0){
+        originalCoordinates.set(0, 0, texture->getWidth(), texture->getHeight());
+    }
+    this->originalCoordinates = originalCoordinates;
+    if(originalPerspective[0].x == 0 && originalPerspective[0].y == 0
+       && originalPerspective[1].x == 0 && originalPerspective[1].y == 0
+       && originalPerspective[2].x == 0 && originalPerspective[2].y == 0
+       && originalPerspective[3].x == 0 && originalPerspective[3].y == 0){
+        originalPerspective[0].x = ofGetWidth()/2 - texture->getWidth()/2;
+        originalPerspective[0].y = ofGetHeight()/2 - texture->getHeight()/2;
+        originalPerspective[1].x = ofGetWidth()/2 + texture->getWidth()/2;
+        originalPerspective[1].y = ofGetHeight()/2 - texture->getHeight()/2;
+        originalPerspective[2].x = ofGetWidth()/2 + texture->getWidth()/2;
+        originalPerspective[2].y = ofGetHeight()/2 + texture->getHeight()/2;
+        originalPerspective[3].x = ofGetWidth()/2 - texture->getWidth()/2;
+        originalPerspective[3].y = ofGetHeight()/2 + texture->getHeight()/2;
+    }
+    memcpy(this->originalPerspective,originalPerspective,sizeof(ofPoint)*4);
+    
 	// Register draw event for the enable/disable magic
 	ofAddListener(ofEvents().draw, this, &Controller::drawEvent);
-	drawing = drawn = false;
+	drawing = false;
+    drawn = true;
 	
 	// Some intial setup
-	this->texture = texture;
-	this->name = name;
-	this->initialOffset = initialOffset;
 	guiHelperFbo.allocate(150, 30);
 	blendB = blendL = blendR = blendT = 0;
 	lastClickTime = ofGetElapsedTimeMillis();
@@ -32,10 +81,10 @@ void Controller::setup(ofTexture * texture, string name, float guiWidth, ofPoint
 	ss_meshFile << safename << "/mesh";
 	meshFile = ss_meshFile.str();
 	
-	// Perpective
-    perspective.setup(0, 0, texture->getWidth(), texture->getHeight());
+	// Perspective
+    perspective.setup(0, 0, getWindowWidth(), getWindowHeight());
     perspective.setCornerSensibility(0.02);
-    perspective.deactivate();
+    perspective.activate();
     ofAddListener(perspective.changeEvent, this, &Controller::onPerspectiveChange);
     
 	// Meshes
@@ -43,96 +92,96 @@ void Controller::setup(ofTexture * texture, string name, float guiWidth, ofPoint
 	internalMesh.setMode(OF_PRIMITIVE_TRIANGLES);
 	
 	// GUI
-    gui.setup(name, guiFile);
-	gui.setPosition(initialOffset);
+    gui.setup(name, guiFile,guiWidth, guiHeight);
+	gui.setPosition(originalPerspective[0].x, originalPerspective[0].y);
 	
 	ofxButton * load = new ofxButton();
-    load->setup("Load", guiWidth);
+    load->setup("Load", guiWidth, guiHeight);
     load->addListener(this, &Controller::onLoad);
     gui.add(load);
 	
 	ofxButton * save = new ofxButton();
-    save->setup("Save", guiWidth);
+    save->setup("Save", guiWidth, guiHeight);
     save->addListener(this, &Controller::onSave);
     gui.add(save);
     
     ofxToggle * enablePerspective = new ofxToggle();
-    enablePerspective->setup("Perspective Warp", true, guiWidth);
-    enablePerspective->addListener(this, &Controller::onEnablePerpective);
+    enablePerspective->setup("Perspective Warp", true, guiWidth, guiHeight);
+    enablePerspective->addListener(this, &Controller::onEnablePerspective);
     gui.add(enablePerspective);
     
-    ofxButton * resetPerpective = new ofxButton();
-    resetPerpective->setup("Reset Perpective", guiWidth);
-    resetPerpective->addListener(this, &Controller::onResetPerspective);
-    gui.add(resetPerpective);
+    ofxButton * resetPerspective = new ofxButton();
+    resetPerspective->setup("Reset Perspective", guiWidth, guiHeight);
+    resetPerspective->addListener(this, &Controller::onResetPerspective);
+    gui.add(resetPerspective);
     
     ofxButton * resetMesh = new ofxButton();
-    resetMesh->setup("Reset Mesh", guiWidth);
+    resetMesh->setup("Reset Mesh", guiWidth, guiHeight);
     resetMesh->addListener(this, &Controller::onResetMesh);
     gui.add(resetMesh);
     
     ofxIntSlider * resolutionX = new ofxIntSlider();
-    resolutionX->setup("Horizontal Resolution", 4, 1, 20, guiWidth);
+    resolutionX->setup("Horizontal Resolution", 4, 1, 20, guiWidth, guiHeight);
     resolutionX->addListener(this, &Controller::onGridChange);
     gui.add(resolutionX);
 	
 	ofxIntSlider * resolutionY = new ofxIntSlider();
-    resolutionY->setup("Vertical Resolution", 4, 1, 20, guiWidth);
+    resolutionY->setup("Vertical Resolution", 4, 1, 20, guiWidth, guiHeight);
     resolutionY->addListener(this, &Controller::onGridChange);
     gui.add(resolutionY);
     
     ofxIntSlider * columns = new ofxIntSlider();
-    columns->setup("Grid Columns", 4, 1, 20, guiWidth);
+    columns->setup("Grid Columns", 4, 1, 20, guiWidth, guiHeight);
     columns->addListener(this, &Controller::onGridChange);
     gui.add(columns);
     
     ofxIntSlider * rows = new ofxIntSlider();
-    rows->setup("Grid Rows", 4, 1, 20, guiWidth);
+    rows->setup("Grid Rows", 4, 1, 20, guiWidth, guiHeight);
     rows->addListener(this, &Controller::onGridChange);
     gui.add(rows);
     
     ofxFloatSlider * startX = new ofxFloatSlider();
-    startX->setup("UV Start X", 0, 0, texture->getWidth(), guiWidth);
+    startX->setup("UV Start X", originalCoordinates.x, originalCoordinates.x, originalCoordinates.x+originalCoordinates.width, guiWidth, guiHeight);
     startX->addListener(this, &Controller::onCoordinatesChange);
     gui.add(startX);
     
     ofxFloatSlider * startY = new ofxFloatSlider();
-    startY->setup("UV Start Y", 0, 0, texture->getHeight(), guiWidth);
+    startY->setup("UV Start Y", originalCoordinates.y, originalCoordinates.y, originalCoordinates.y+originalCoordinates.height, guiWidth, guiHeight);
     startY->addListener(this, &Controller::onCoordinatesChange);
     gui.add(startY);
     
     ofxFloatSlider * endX = new ofxFloatSlider();
-    endX->setup("UV End X", texture->getWidth(), 0, texture->getWidth(), guiWidth);
+    endX->setup("UV End X", originalCoordinates.x+originalCoordinates.width, originalCoordinates.x, originalCoordinates.x+originalCoordinates.width, guiWidth, guiHeight);
     endX->addListener(this, &Controller::onCoordinatesChange);
     gui.add(endX);
     
     ofxFloatSlider * endY = new ofxFloatSlider();
-    endY->setup("UV End Y", texture->getHeight(), 0, texture->getHeight(), guiWidth);
+    endY->setup("UV End Y", originalCoordinates.y+originalCoordinates.height, originalCoordinates.y, originalCoordinates.y+originalCoordinates.height, guiWidth, guiHeight);
     endY->addListener(this, &Controller::onCoordinatesChange);
     gui.add(endY);
 	
 	ofxFloatSlider * blendTSlider = new ofxFloatSlider();
-    blendTSlider->setup("Blend Top", 0, 0, texture->getHeight(), guiWidth);
+    blendTSlider->setup("Blend Top", 0, 0, getWindowHeight(), guiWidth, guiHeight);
     blendTSlider->addListener(this, &Controller::onBlendChange);
     gui.add(blendTSlider);
 	
 	ofxFloatSlider * blendDSlider = new ofxFloatSlider();
-    blendDSlider->setup("Blend Down", 0, 0, texture->getHeight(), guiWidth);
+    blendDSlider->setup("Blend Down", 0, 0, getWindowHeight(), guiWidth, guiHeight);
     blendDSlider->addListener(this, &Controller::onBlendChange);
     gui.add(blendDSlider);
 	
 	ofxFloatSlider * blendLSlider = new ofxFloatSlider();
-    blendLSlider->setup("Blend Left", 0, 0, texture->getWidth(), guiWidth);
+    blendLSlider->setup("Blend Left", 0, 0, getWindowWidth(), guiWidth, guiHeight);
     blendLSlider->addListener(this, &Controller::onBlendChange);
     gui.add(blendLSlider);
 	
 	ofxFloatSlider * blendRSlider = new ofxFloatSlider();
-    blendRSlider->setup("Blend Right", 0, 0, texture->getWidth(), guiWidth);
+    blendRSlider->setup("Blend Right", 0, 0, getWindowWidth(), guiWidth, guiHeight);
     blendRSlider->addListener(this, &Controller::onBlendChange);
     gui.add(blendRSlider);
 	
 	ofxIntSlider * lineThickness = new ofxIntSlider();
-    lineThickness->setup("GUI Lines Thickness", 1, 1, 10, guiWidth);
+    lineThickness->setup("GUI Lines Thickness", 1, 1, 10, guiWidth, guiHeight);
     lineThickness->addListener(this, &Controller::onGuiLinesThicknessChange);
     gui.add(lineThickness);
     
@@ -151,40 +200,40 @@ void Controller::draw(){
 		glBegin(GL_TRIANGLE_STRIP);
 		glColor4f(0, 0, 0, 1);
 		glVertex3f( 0.0f, 0.0f, 0.0f );
-		glVertex3f( texture->getWidth(), 0.0f, 0.0f );
+		glVertex3f( getWindowWidth(), 0.0f, 0.0f );
 		glColor4f(0, 0, 0, 0);
 		glVertex3f( 0.0f, blendT, 0.0f );		
-		glVertex3f( texture->getWidth(), blendT, 0.0f );
+		glVertex3f( getWindowWidth(), blendT, 0.0f );
 		glEnd();
 	}
 	if(blendB>0){
 		glBegin(GL_TRIANGLE_STRIP);
 		glColor4f(0, 0, 0, 1);
-		glVertex3f( 0.0f, texture->getHeight(), 0.0f );
-		glVertex3f( texture->getWidth(), texture->getHeight(), 0.0f );
+		glVertex3f( 0.0f, getWindowHeight(), 0.0f );
+		glVertex3f( getWindowWidth(), getWindowHeight(), 0.0f );
 		glColor4f(0, 0, 0, 0);
-		glVertex3f( 0.0f, texture->getHeight() - blendB, 0.0f );
-		glVertex3f( texture->getWidth(), texture->getHeight() - blendB, 0.0f );
+		glVertex3f( 0.0f, getWindowHeight() - blendB, 0.0f );
+		glVertex3f( getWindowWidth(), getWindowHeight() - blendB, 0.0f );
 		glEnd();
 	}
 	if(blendL>0){
 		glBegin(GL_TRIANGLE_STRIP);
 		glColor4f(0, 0, 0, 1);
 		glVertex3f( 0.0f, 0.0f, 0.0f );
-		glVertex3f( 0.0f,  texture->getHeight(), 0.0f );
+		glVertex3f( 0.0f,  getWindowHeight(), 0.0f );
 		glColor4f(0, 0, 0, 0);
 		glVertex3f( blendL, 0.0f, 0.0f );
-		glVertex3f( blendL,  texture->getHeight(), 0.0f );
+		glVertex3f( blendL,  getWindowHeight(), 0.0f );
 		glEnd();
 	}
 	if(blendR>0){
 		glBegin(GL_TRIANGLE_STRIP);
 		glColor4f(0, 0, 0, 1);
-		glVertex3f( texture->getWidth(), 0.0f, 0.0f );
-		glVertex3f( texture->getWidth(), texture->getHeight(), 0.0f );
+		glVertex3f( getWindowWidth(), 0.0f, 0.0f );
+		glVertex3f( getWindowWidth(), getWindowHeight(), 0.0f );
 		glColor4f(0, 0, 0, 0);
-		glVertex3f( texture->getWidth() - blendR, 0.0f, 0.0f );
-		glVertex3f( texture->getWidth() - blendR, texture->getHeight(), 0.0f );
+		glVertex3f( getWindowWidth() - blendR, 0.0f, 0.0f );
+		glVertex3f( getWindowWidth() - blendR, getWindowHeight(), 0.0f );
 		glEnd();
 	}
 	
@@ -200,17 +249,17 @@ void Controller::drawGui(){
 	ofPushStyle();
 	ofNoFill();
 	ofSetColor(255);
-	if(blendT>0) ofRect(0,0,texture->getWidth(), blendT);
-	if(blendB>0) ofRect(0,texture->getHeight() - blendB,texture->getWidth(), blendB);
-	if(blendL>0) ofRect(0,0,blendL, texture->getHeight());
-	if(blendR>0) ofRect(texture->getWidth() - blendR ,0,blendR, texture->getHeight());
+	if(blendT>0) ofRect(0,0,getWindowWidth(), blendT);
+	if(blendB>0) ofRect(0,getWindowHeight() - blendB,getWindowWidth(), blendB);
+	if(blendL>0) ofRect(0,0,blendL, getWindowHeight());
+	if(blendR>0) ofRect(getWindowWidth() - blendR ,0,blendR, getWindowHeight());
 	ofPopStyle();
 	
 	if(perspective.isActive()){
 		ofPushStyle();
 		ofNoFill();
 		ofSetColor(255);
-		ofRect(0, 0, texture->getWidth(), texture->getHeight());
+		ofRect(0, 0, getWindowWidth(), getWindowHeight());
 		ofPopStyle();
         
         ofPushStyle();
@@ -218,9 +267,9 @@ void Controller::drawGui(){
 		glPointSize(10);
 		glBegin(GL_POINTS);
 		glVertex3f(0, 0, 0);
-		glVertex3f(0, texture->getHeight(), 0);
-		glVertex3f(texture->getWidth(), 0, 0);
-		glVertex3f(texture->getWidth(), texture->getHeight(), 0);
+		glVertex3f(0, getWindowHeight(), 0);
+		glVertex3f(getWindowWidth(), 0, 0);
+		glVertex3f(getWindowWidth(), getWindowHeight(), 0);
 		glEnd();
 		glPointSize(1);
 		ofPopStyle();
@@ -241,7 +290,11 @@ void Controller::drawGui(){
 	ofPushStyle();
 	ofSetColor(255, 255, 255);
 	ofVec4f transformed = perspective.fromScreenToWarpCoord(mouse.x, mouse.y, 0);
-	ofDrawBitmapString("texture: " + ofToString((int)transformed.x)+","+ofToString((int)transformed.y), ofPoint(5, 5));
+    ofVec2f texSize(coordinatesEnd.x - coordinatesStart.x, coordinatesEnd.y - coordinatesStart.y);
+    ofVec4f texCoords;
+    texCoords.x = ofMap(transformed.x, 0, originalCoordinates.width, 0, texSize.x, true) + coordinatesStart.x;
+    texCoords.y = ofMap(transformed.y, 0, originalCoordinates.height, 0, texSize.y, true) + coordinatesStart.y;
+	ofDrawBitmapString("texture: " + ofToString((int)texCoords.x)+","+ofToString((int)texCoords.y), ofPoint(5, 5));
 	ofDrawBitmapString("screen:  " + ofToString((int)mouse.x)+","+ofToString((int)mouse.y), ofPoint(5, 15));
 	ofPopStyle();
 	guiHelperFbo.end();
@@ -267,6 +320,13 @@ void Controller::drawGui(){
 	ofPopStyle();
 	gui.draw();
 
+}
+
+float Controller::getWindowWidth(){
+    return originalCoordinates.width;
+}
+float Controller::getWindowHeight(){
+    return originalCoordinates.height;
 }
 
 void Controller::selectVertex(float mouseX, float mouseY){
@@ -492,24 +552,10 @@ void Controller::loadVertices(float * handler){
 }
 
 void Controller::resetPerspective(bool saveInHistory){
-    ofxXmlSettings perspectiveSettings;
-    perspectiveSettings.clear();
-    perspectiveSettings.addTag("corners");
-    perspectiveSettings.pushTag("corners");
-    perspectiveSettings.addTag("corner");
-    float offX = initialOffset.x/texture->getWidth();
-    float offY = initialOffset.y/texture->getHeight();
-    perspectiveSettings.setValue("corner:x",offX , 0);
-    perspectiveSettings.setValue("corner:y",offY, 0);
-    perspectiveSettings.setValue("corner:x",offX + 1.0, 1);
-    perspectiveSettings.setValue("corner:y",offY, 1);
-    perspectiveSettings.setValue("corner:x",offX + 1.0, 2);
-    perspectiveSettings.setValue("corner:y",offY + 1.0, 2);
-    perspectiveSettings.setValue("corner:x",offX, 3);
-    perspectiveSettings.setValue("corner:y",offY + 1.0, 3);
-    perspectiveSettings.popTag();
-    
-    loadPerspective(perspectiveSettings);
+    perspective.setCorner(ofxGLWarper::TOP_LEFT, originalPerspective[0]);
+    perspective.setCorner(ofxGLWarper::TOP_RIGHT, originalPerspective[1]);
+    perspective.setCorner(ofxGLWarper::BOTTOM_RIGHT, originalPerspective[2]);
+    perspective.setCorner(ofxGLWarper::BOTTOM_LEFT, originalPerspective[3]);
     
     if(saveInHistory)saveHistoryEntry();
 }
@@ -528,7 +574,7 @@ void Controller::loadGUI(ofxXmlSettings & handler){
 	int dummyi=0;
 	float dummyf=0;
 	onGridChange(dummyi); // will also update the coordinates;
-	onEnablePerpective(gui.getToggle("Perspective Warp"));
+	onEnablePerspective(gui.getToggle("Perspective Warp"));
 	onBlendChange(dummyf);
 }
 
@@ -655,7 +701,7 @@ void Controller::onBlendChange(float & value){
 	if(blendT == gui.getFloatSlider("Blend Top")
 	   && blendB == gui.getFloatSlider("Blend Down")
 	   && blendL == gui.getFloatSlider("Blend Left")
-	   && blendL == gui.getFloatSlider("Blend Right")){
+	   && blendR == gui.getFloatSlider("Blend Right")){
 		return;
 	}
 	guiHasChanged = true; // flag that gui has changed
@@ -665,7 +711,7 @@ void Controller::onBlendChange(float & value){
 	blendL = gui.getFloatSlider("Blend Left");
 	blendR = gui.getFloatSlider("Blend Right");
 }
-void Controller::onEnablePerpective(bool & value){
+void Controller::onEnablePerspective(bool & value){
 	guiHasChanged = true; // flag that gui changed
     if(value){
         perspective.activate();
@@ -701,7 +747,7 @@ void Controller::onGridChange(int & value){
     controlMesh.clearVertices();
     internalMesh.clearVertices();
     
-    ofVec2f c_Size(texture->getWidth() / gridSize.x, texture->getHeight() / gridSize.y);
+    ofVec2f c_Size(getWindowWidth() / gridSize.x, getWindowHeight() / gridSize.y);
     ofVec2f i_Size = c_Size / resolution;
     int c_index = 0;
     int i_index = 0;
@@ -961,9 +1007,12 @@ void Controller::drawEvent(ofEventArgs& args) {
 		if(drawing) {
 			ofRegisterMouseEvents(this);
 			ofRegisterKeyEvents(this);
+            
+            if(gui.getToggle("Perspective Warp")) perspective.activate();
 		} else {
 			ofUnregisterMouseEvents(this);
 			ofUnregisterKeyEvents(this);
+            perspective.deactivate();
 		}
 	}
 	drawn = false; // turn the drawn flag off, for draw() to turn back on
