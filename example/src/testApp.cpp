@@ -3,16 +3,22 @@
 //--------------------------------------------------------------
 void testApp::setup(){	
     ofBackground(0, 0, 0);
+    ofSetVerticalSync(true);
+    
+    ofEnableNormalizedTexCoords(); // You can also use ARB mode
     
     // We will use this flag to decide if we should draw the GUI or not
     drawGui = true;    
     
     // Pointer to the texture
     testcard.loadImage("testcard.png");
-    ofTexture * texture = &(testcard.getTextureReference());    
+    ofTexture * texture = &(testcard.getTextureReference());
+    
+    // Size of the quad you will work with
+    ofVec2f size(texture->getWidth(), texture->getHeight());
     
     // Subsection of the texture coordinates
-    ofRectangle subsection(texture->getWidth()/2, 0,texture->getWidth()/2, texture->getHeight());
+    ofRectangle subsection(ofPoint(0.5,0.0), ofPoint(1.0,1.0));
     
     // Inital perspective corners position (order is top-left, top-right, bottom-left, bottom-right).
     // In this example, let's position it agains the right corner of the screen.
@@ -34,12 +40,11 @@ void testApp::setup(){
     float guiHeight = 15;
     
     // Setup!
-    controller.setup(texture, subsection, corners, name, guiWidth, guiHeight);
+    controller.setup(texture, size, subsection, corners, name, guiWidth, guiHeight);
 }
 
 //--------------------------------------------------------------
 void testApp::draw(){
-    
     ofSetColor(255);
     controller.draw();
 	if(drawGui)controller.drawGui();
