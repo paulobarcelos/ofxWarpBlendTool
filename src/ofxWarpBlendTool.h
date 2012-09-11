@@ -43,7 +43,7 @@ namespace ofxWarpBlendTool {
 		
 	public:
         Controller();
-        void setup(ofTexture * texture, ofRectangle originalCoordinates = defaultOriginalCoordinates, ofPoint originalPerspective[4] = (ofPoint*)defaultOriginalPerspective, string name = defaultName, float guiWidth = defaultGuiWidth, float guiHeight = defaultGuiHeight);
+        void setup(ofTexture * texture, ofVec2f originalSize = defaultOriginalSize, ofRectangle originalCoordinates = defaultOriginalCoordinates, ofPoint originalPerspective[4] = (ofPoint*)defaultOriginalPerspective, string name = defaultName, float guiWidth = defaultGuiWidth, float guiHeight = defaultGuiHeight);
        
         void setTexture(ofTexture * texture);
 		void draw();
@@ -60,6 +60,7 @@ namespace ofxWarpBlendTool {
         float getWindowHeight();
         
         static const string defaultName;
+        static const ofVec2f defaultOriginalSize;
         static const ofRectangle defaultOriginalCoordinates;
         static const ofPoint defaultOriginalPerspective[4];
         static const float defaultGuiWidth;
@@ -69,6 +70,7 @@ namespace ofxWarpBlendTool {
 	protected:
         ofTexture * texture;
         string name;
+        ofVec2f originalSize;
         ofRectangle originalCoordinates;
         ofPoint originalPerspective[4];
         float guiWidth;
