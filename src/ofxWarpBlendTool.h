@@ -48,7 +48,7 @@ namespace ofxWarpBlendTool {
         void setTexture(ofTexture * texture);
 		void draw();
 		void drawGui();
-		
+        
 		void keyPressed(ofKeyEventArgs & args);
 		void keyReleased(ofKeyEventArgs & args);
 		void mouseMoved(ofMouseEventArgs & args);
@@ -58,6 +58,12 @@ namespace ofxWarpBlendTool {
         
         float getWindowWidth();
         float getWindowHeight();
+        
+        void setScissor(ofRectangle scissor, bool updateGui = true);
+        ofRectangle getScissor();
+        void enableScissor(bool updateGui = true);
+        void disableScissor(bool updateGui = true);
+        bool isScissorEnabled();
         
         static const string defaultName;
         static const ofVec2f defaultOriginalSize;
@@ -75,6 +81,8 @@ namespace ofxWarpBlendTool {
         ofPoint originalPerspective[4];
         float guiWidth;
         float guiHeight;
+        ofRectangle scissor;
+        bool scissorEnabled;
         
         string safename;
         string guiFile, perspectiveFile, meshFile;
@@ -87,8 +95,11 @@ namespace ofxWarpBlendTool {
 		void onGridChange(int & value);
 		void onCoordinatesChange(float & value);
 		void onEnablePerspective(bool & value);
+        void onScissorEnabled(bool & value);
+        void onScissorChange(int & value);
         void onGuiLinesThicknessChange(int & value);
         void onPerspectiveChange(ofxGLWarper::CornerLocation & cornerLocation);
+        
 		
 		void selectVertex(float mouseX, float mouseY);
 		ofPoint getInteractionOffset(float mouseX, float mouseY);
