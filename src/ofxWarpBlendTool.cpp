@@ -15,6 +15,8 @@ Controller::Controller(){
     memcpy (originalPerspective,defaultOriginalPerspective,sizeof(ofPoint)*4);
     guiWidth = defaultGuiWidth;
     guiHeight = defaultGuiHeight;
+    scissor = ofRectangle(0,0, ofGetWidth(), ofGetHeight());
+    scissorEnabled = false;
 }
 void Controller::setTexture(ofTexture * texture){
     if(!this->texture){
@@ -181,6 +183,31 @@ void Controller::setup(ofTexture * texture, ofVec2f originalSize, ofRectangle or
     blendRSlider->setup("Blend Right", 0, 0, 1, guiWidth, guiHeight);
     blendRSlider->addListener(this, &Controller::onBlendChange);
     gui.add(blendRSlider);
+    
+    ofxToggle * scissorEnable = new ofxToggle();
+    scissorEnable->setup("Scissor Active", false, guiWidth, guiHeight);
+    scissorEnable->addListener(this, &Controller::onScissorEnabled);
+    gui.add(scissorEnable);
+    
+    ofxIntSlider * scissorX = new ofxIntSlider();
+    scissorX->setup("Scissor Start X", 0, 0, ofGetScreenWidth(), guiWidth, guiHeight);
+    scissorX->addListener(this, &Controller::onScissorChange);
+    gui.add(scissorX);
+    
+    ofxIntSlider * scissorY = new ofxIntSlider();
+    scissorY->setup("Scissor Start Y", 0, 0, ofGetScreenHeight(), guiWidth, guiHeight);
+    scissorY->addListener(this, &Controller::onScissorChange);
+    gui.add(scissorY);
+    
+    ofxIntSlider * scissorWidth = new ofxIntSlider();
+    scissorWidth->setup("Scissor End X", ofGetScreenWidth(), 0, ofGetScreenWidth(), guiWidth, guiHeight);
+    scissorWidth->addListener(this, &Controller::onScissorChange);
+    gui.add(scissorWidth);
+    
+    ofxIntSlider * scissorHeight = new ofxIntSlider();
+    scissorHeight->setup("Scissor End Y", ofGetScreenHeight(), 0, ofGetScreenHeight(), guiWidth, guiHeight);
+    scissorHeight->addListener(this, &Controller::onScissorChange);
+    gui.add(scissorHeight);
 	
 	ofxIntSlider * lineThickness = new ofxIntSlider();
     lineThickness->setup("GUI Lines Thickness", 1, 1, 10, guiWidth, guiHeight);
@@ -193,6 +220,11 @@ void Controller::setup(ofTexture * texture, ofVec2f originalSize, ofRectangle or
 	onLoad(dummy);
 }
 void Controller::draw(){
+    if(scissorEnabled){
+        glEnable(GL_SCISSOR_TEST);
+        glScissor(scissor.x, ofGetHeight()-scissor.y-scissor.height, scissor.width, scissor.height);
+    }
+    
 	perspective.begin();
 	texture->bind();
 	internalMesh.draw();
@@ -240,6 +272,10 @@ void Controller::draw(){
 	}
 	
 	perspective.end();
+    
+    if(scissorEnabled){
+        glDisable(GL_SCISSOR_TEST);
+    }
 }
 void Controller::drawGui(){
 	drawn = true; // for the enable/disable magic
@@ -256,34 +292,43 @@ void Controller::drawGui(){
 	if(blendL>0) ofRect(0,0,blendL*getWindowHeight(), getWindowHeight());
 	if(blendR>0) ofRect(getWindowWidth() - blendR*getWindowHeight() ,0,blendR*getWindowHeight(), getWindowHeight());
 	ofPopStyle();
+    perspective.end();
 	
 	if(perspective.isActive()){
+        perspective.begin();
 		ofPushStyle();
 		ofNoFill();
 		ofSetColor(255);
 		ofRect(0, 0, getWindowWidth(), getWindowHeight());
 		ofPopStyle();
+        perspective.end();
         
         ofPushStyle();
         ofSetColor(255,255,0);
-		glPointSize(10);
-		glBegin(GL_POINTS);
-		glVertex3f(0, 0, 0);
-		glVertex3f(0, getWindowHeight(), 0);
-		glVertex3f(getWindowWidth(), 0, 0);
-		glVertex3f(getWindowWidth(), getWindowHeight(), 0);
-		glEnd();
-		glPointSize(1);
+    
+		ofCircle(perspective.fromWarpToScreenCoord(0, 0, 0), 9);
+		ofCircle(perspective.fromWarpToScreenCoord(0, getWindowHeight(), 0), 9);
+		ofCircle(perspective.fromWarpToScreenCoord(getWindowWidth(), 0, 0), 9);
+		ofCircle(perspective.fromWarpToScreenCoord(getWindowWidth(), getWindowHeight(), 0), 9);
+
 		ofPopStyle();
 	}
 	else{
+        perspective.begin();
 		internalMesh.drawWireframe();
-		glPointSize(10);
-		controlMesh.drawVertices();
-		glPointSize(2);
+        perspective.end();
+        
+        for (int i = 0; i < controlMesh.getVertices().size(); i++) {
+            ofPushStyle();
+            ofSetColor(controlMesh.getColor(i));
+            ofPoint vertex = controlMesh.getVertex(i);
+            ofCircle(perspective.fromWarpToScreenCoord(vertex.x,vertex.y,vertex.z), 9);
+            ofPopStyle();
+        }
+        
 		
 	}
-	perspective.end();
+	
 	
 	
 	guiHelperFbo.begin();
@@ -332,6 +377,38 @@ float Controller::getWindowWidth(){
 }
 float Controller::getWindowHeight(){
     return originalSize.y;
+}
+
+void Controller::setScissor(ofRectangle scissor, bool updateGui){
+    this->scissor = scissor;
+    if(updateGui){
+        gui.getIntSlider("Scissor Start X") = scissor.x;
+        gui.getIntSlider("Scissor Start Y") = scissor.y;
+        
+        gui.getIntSlider("Scissor End X") = scissor.x + scissor.width;
+        gui.getIntSlider("Scissor End Y") = scissor.y + scissor.height;
+        saveHistoryEntry();
+    }
+}
+ofRectangle Controller::getScissor(){
+    return scissor;
+}
+void Controller::enableScissor(bool updateGui){
+    scissorEnabled = true;
+    if(updateGui){
+        gui.getToggle("Scissor Active") = scissorEnabled;
+        saveHistoryEntry();
+    }
+}
+void Controller::disableScissor(bool updateGui){
+    scissorEnabled = false;
+    if(updateGui){
+        gui.getToggle("Scissor Active") = scissorEnabled;
+        saveHistoryEntry();
+    }
+}
+bool Controller::isScissorEnabled(){
+    return scissorEnabled;
 }
 
 void Controller::selectVertex(float mouseX, float mouseY){
@@ -577,11 +654,14 @@ void Controller::saveGUI(ofxXmlSettings & handler){
 }
 void Controller::loadGUI(ofxXmlSettings & handler){
 	gui.loadFromXml(handler);
+    bool dummyb=0;
 	int dummyi=0;
 	float dummyf=0;
 	onGridChange(dummyi); // will also update the coordinates;
 	onEnablePerspective(gui.getToggle("Perspective Warp"));
 	onBlendChange(dummyf);
+    onScissorEnabled(gui.getToggle("Scissor Active"));
+    onScissorChange(dummyi);
 }
 
 void Controller::saveHistoryEntry(){
@@ -870,6 +950,18 @@ void Controller::onCoordinatesChange(float & value){
             }
         }
     }
+}
+void Controller::onScissorEnabled(bool & value){
+    guiHasChanged = true; // flag that gui has changed
+    if(value){
+        enableScissor(false);
+    }
+    else disableScissor(false);
+}
+void Controller::onScissorChange(int & value){
+    guiHasChanged = true; // flag that gui has changed
+    setScissor(ofRectangle(ofPoint(gui.getIntSlider("Scissor Start X"),gui.getIntSlider("Scissor Start Y")),
+               ofPoint(gui.getIntSlider("Scissor End X"),gui.getIntSlider("Scissor End Y"))), false);
 }
 void Controller::onGuiLinesThicknessChange(int &value){
     guiHasChanged = true; // flag that gui has changed
