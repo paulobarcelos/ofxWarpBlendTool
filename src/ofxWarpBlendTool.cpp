@@ -465,7 +465,6 @@ ofPoint Controller::getInteractionOffset(float mouseX, float mouseY){
     for (int i = 0; i < controlQuads.size(); i++) {
 		ControlQuad * c_quad = controlQuads[i];
 		for (int ci = 0; ci < 4; ci++) {
-			int index = c_quad->index + ci;
 			SelectablePoint * c_vertex;
 			if(ci == 0) c_vertex = &(c_quad->TL);
 			else if(ci == 1) c_vertex = &(c_quad->BL);
