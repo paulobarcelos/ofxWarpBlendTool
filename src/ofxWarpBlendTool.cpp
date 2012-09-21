@@ -16,6 +16,7 @@ Controller::Controller(){
     guiWidth = defaultGuiWidth;
     guiHeight = defaultGuiHeight;
     scissor = ofRectangle(0,0, ofGetWidth(), ofGetHeight());
+	postBrt = postSat = postBMult = postRMult = postGMult = postBMult = 1.0;
     scissorEnabled = false;
 }
 void Controller::setTexture(ofTexture * texture){
@@ -39,7 +40,7 @@ void Controller::setup(ofTexture * texture, ofVec2f originalSize, ofRectangle or
        && originalCoordinates.y==0.0
        && originalCoordinates.width==0.0
        && originalCoordinates.height==0.0){
-        if(ofGetUsingNormalizedTexCoords()) originalCoordinates.set(0.0, 0.0, 1.0, 1.0);
+        if(ofGetUsingNormalizedTexCoords())originalCoordinates.set(0.0, 0.0, 1.0, 1.0);
         else originalCoordinates.set(0.0, 0.0, texture->getWidth(), texture->getHeight());
     }
     this->originalCoordinates = originalCoordinates;
@@ -209,15 +210,54 @@ void Controller::setup(ofTexture * texture, ofVec2f originalSize, ofRectangle or
     scissorHeight->addListener(this, &Controller::onScissorChange);
     gui.add(scissorHeight);
 	
+	
+	ofxFloatSlider * postBrtSlider = new ofxFloatSlider();
+    postBrtSlider->setup("Brighteness", 1, 0, 5, guiWidth, guiHeight);
+    postBrtSlider->addListener(this, &Controller::onPostProcessingValueChanged);
+    gui.add(postBrtSlider);
+	
+	ofxFloatSlider * postConSlider = new ofxFloatSlider();
+    postConSlider->setup("Contrast", 1, 0, 5, guiWidth, guiHeight);
+    postConSlider->addListener(this, &Controller::onPostProcessingValueChanged);
+    gui.add(postConSlider);
+	
+	ofxFloatSlider * postSatSlider = new ofxFloatSlider();
+    postSatSlider->setup("Saturation", 1, 0, 5, guiWidth, guiHeight);
+    postSatSlider->addListener(this, &Controller::onPostProcessingValueChanged);
+    gui.add(postSatSlider);
+	
+	ofxFloatSlider * postRMultSlider = new ofxFloatSlider();
+    postRMultSlider->setup("Red Multiplier", 1, 0, 5, guiWidth, guiHeight);
+    postRMultSlider->addListener(this, &Controller::onPostProcessingValueChanged);
+    gui.add(postRMultSlider);
+	
+	ofxFloatSlider * postGmultSlider = new ofxFloatSlider();
+    postGmultSlider->setup("Green Multiplier", 1, 0, 5, guiWidth, guiHeight);
+    postGmultSlider->addListener(this, &Controller::onPostProcessingValueChanged);
+    gui.add(postGmultSlider);
+	
+	ofxFloatSlider * postBMultSlider = new ofxFloatSlider();
+    postBMultSlider->setup("Blue Multipler", 1, 0, 5, guiWidth, guiHeight);
+    postBMultSlider->addListener(this, &Controller::onPostProcessingValueChanged);
+    gui.add(postBMultSlider);
+	
 	ofxIntSlider * lineThickness = new ofxIntSlider();
     lineThickness->setup("GUI Lines Thickness", 1, 1, 10, guiWidth, guiHeight);
     lineThickness->addListener(this, &Controller::onGuiLinesThicknessChange);
     gui.add(lineThickness);
     
 	
+	// Post processing
+	shader.setupShaderFromSource(GL_VERTEX_SHADER, VertShader);
+	if(ofGetUsingNormalizedTexCoords()) shader.setupShaderFromSource(GL_FRAGMENT_SHADER, NormalizedFragShader);
+	else shader.setupShaderFromSource(GL_FRAGMENT_SHADER, UnnormalizedFragShader);
+	shader.linkProgram();
+	
 	// load settings
 	bool dummy = true;
 	onLoad(dummy);
+	
+	
 }
 void Controller::draw(){
     if(scissorEnabled){
@@ -226,9 +266,20 @@ void Controller::draw(){
     }
     
 	perspective.begin();
-	texture->bind();
+	
+	shader.begin();
+	
+	shader.setUniformTexture("tex0", *texture, 0 );
+	shader.setUniform1f("brt", postBrt );
+	shader.setUniform1f("sat", postSat );
+	shader.setUniform1f("con", postCon );
+	shader.setUniform1f("rMult", postRMult );
+	shader.setUniform1f("gMult", postGMult );
+	shader.setUniform1f("bMult", postBMult );
+
 	internalMesh.draw();
-	texture->unbind();
+	
+	shader.end();
 	
 	if(blendT>0){
 		glBegin(GL_TRIANGLE_STRIP);
@@ -236,7 +287,7 @@ void Controller::draw(){
 		glVertex3f( 0.0f, 0.0f, 0.0f );
 		glVertex3f( getWindowWidth(), 0.0f, 0.0f );
 		glColor4f(0, 0, 0, 0);
-		glVertex3f( 0.0f, blendT*getWindowHeight(), 0.0f );		
+		glVertex3f( 0.0f, blendT*getWindowHeight(), 0.0f );
 		glVertex3f( getWindowWidth(), blendT*getWindowHeight(), 0.0f );
 		glEnd();
 	}
@@ -409,6 +460,49 @@ void Controller::disableScissor(bool updateGui){
 }
 bool Controller::isScissorEnabled(){
     return scissorEnabled;
+}
+
+void Controller::setBrighteness(float value, bool updateGui){
+    postBrt = value;
+    if(updateGui){
+        gui.getFloatSlider("Brighteness") = postBrt;
+        saveHistoryEntry();
+    }
+}
+void Controller::setContrast(float value, bool updateGui){
+    postCon = value;
+    if(updateGui){
+        gui.getFloatSlider("Contrast") = value;
+        saveHistoryEntry();
+    }
+}
+void Controller::setSaturation(float value, bool updateGui){
+    postSat = value;
+    if(updateGui){
+        gui.getFloatSlider("Saturation") = value;
+        saveHistoryEntry();
+    }
+}
+void Controller::setRedMultiplier(float value, bool updateGui){
+    postRMult = value;
+    if(updateGui){
+        gui.getFloatSlider("Red Multiplier") = value;
+        saveHistoryEntry();
+    }
+}
+void Controller::setGreenMultipler(float value, bool updateGui){
+    postGMult = value;
+    if(updateGui){
+        gui.getFloatSlider("Green Multipler") = value;
+        saveHistoryEntry();
+    }
+}
+void Controller::setBlueMultipler(float value, bool updateGui){
+    postBMult = value;
+    if(updateGui){
+        gui.getFloatSlider("Blue Multipler") = value;
+        saveHistoryEntry();
+    }
 }
 
 void Controller::selectVertex(float mouseX, float mouseY){
@@ -662,6 +756,7 @@ void Controller::loadGUI(ofxXmlSettings & handler){
 	onBlendChange(dummyf);
     onScissorEnabled(gui.getToggle("Scissor Active"));
     onScissorChange(dummyi);
+	onPostProcessingValueChanged(dummyf);
 }
 
 void Controller::saveHistoryEntry(){
@@ -911,10 +1006,23 @@ void Controller::onCoordinatesChange(float & value){
 	
 	guiHasChanged = true; // flag that gui has changed
 	
-    coordinatesStart.x =  gui.getFloatSlider("UV Start X");
-    coordinatesStart.y =  gui.getFloatSlider("UV Start Y");
-    coordinatesEnd.x =  gui.getFloatSlider("UV End X");
-    coordinatesEnd.y =  gui.getFloatSlider("UV End Y");
+	coordinatesStart.x =  gui.getFloatSlider("UV Start X");
+	coordinatesStart.y =  gui.getFloatSlider("UV Start Y");
+	coordinatesEnd.x =  gui.getFloatSlider("UV End X");
+	coordinatesEnd.y =  gui.getFloatSlider("UV End Y");
+	
+	if(ofGetUsingNormalizedTexCoords()){
+		// openframeworks is mental with normalized coordinates inside a shader...
+		// a shame.. but here is the dirty hack
+		float capX = texture->getWidth() / ofNextPow2(texture->getWidth());
+		float capY = texture->getHeight() / ofNextPow2(texture->getHeight());
+		
+		coordinatesStart.x =  ofMap(coordinatesStart.x, 0, 1, 0, capX);
+		coordinatesStart.y =  ofMap(coordinatesStart.y, 0, 1, 0, capY);
+		coordinatesEnd.x =  ofMap(coordinatesEnd.x, 0, 1, 0, capX);
+		coordinatesEnd.y =  ofMap(coordinatesEnd.y, 0, 1, 0, capY);
+	}
+
     
 	internalMesh.clearTexCoords();
 	
@@ -962,6 +1070,15 @@ void Controller::onScissorChange(int & value){
     guiHasChanged = true; // flag that gui has changed
     setScissor(ofRectangle(ofPoint(gui.getIntSlider("Scissor Start X"),gui.getIntSlider("Scissor Start Y")),
                ofPoint(gui.getIntSlider("Scissor End X"),gui.getIntSlider("Scissor End Y"))), false);
+}
+void Controller::onPostProcessingValueChanged(float & value){
+	guiHasChanged = true; // flag that gui has changed
+	if(postBrt != gui.getFloatSlider("Brighteness")) setBrighteness(gui.getFloatSlider("Brighteness"), false);
+	if(postSat != gui.getFloatSlider("Saturation")) setSaturation(gui.getFloatSlider("Saturation"), false);
+	if(postCon != gui.getFloatSlider("Contrast")) setContrast(gui.getFloatSlider("Contrast"), false);
+	if(postRMult != gui.getFloatSlider("Red Multiplier")) setRedMultiplier(gui.getFloatSlider("Red Multiplier"), false);
+	if(postGMult != gui.getFloatSlider("Green Multiplier")) setGreenMultipler(gui.getFloatSlider("Green Multiplier"), false);
+	if(postBMult != gui.getFloatSlider("Blue Multipler")) setBlueMultipler(gui.getFloatSlider("Blue Multipler"), false);
 }
 void Controller::onGuiLinesThicknessChange(int &value){
     guiHasChanged = true; // flag that gui has changed

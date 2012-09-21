@@ -1,5 +1,6 @@
 #pragma once
 #include "ofMain.h"
+#include "ofxWarpBlendToolShaders.h"
 #include "ofxGui.h"
 #include "ofxGlWarper.h"
 #include "ofxModifierKeys.h"
@@ -64,6 +65,13 @@ namespace ofxWarpBlendTool {
         void enableScissor(bool updateGui = true);
         void disableScissor(bool updateGui = true);
         bool isScissorEnabled();
+		
+		void setBrighteness(float value, bool updateGui = true);
+		void setContrast(float value, bool updateGui = true);
+		void setSaturation(float value, bool updateGui = true);
+		void setRedMultiplier(float value, bool updateGui = true);
+		void setGreenMultipler(float value, bool updateGui = true);
+		void setBlueMultipler(float value, bool updateGui = true);
         
         static const string defaultName;
         static const ofVec2f defaultOriginalSize;
@@ -97,6 +105,7 @@ namespace ofxWarpBlendTool {
 		void onEnablePerspective(bool & value);
         void onScissorEnabled(bool & value);
         void onScissorChange(int & value);
+		void onPostProcessingValueChanged(float & value);
         void onGuiLinesThicknessChange(int & value);
         void onPerspectiveChange(ofxGLWarper::CornerLocation & cornerLocation);
         
@@ -155,6 +164,14 @@ namespace ofxWarpBlendTool {
 				
 		ofFbo guiHelperFbo;
         
+		// Post processing
+		float postBrt;
+		float postSat;
+		float postCon;
+		float postRMult;
+		float postGMult;
+		float postBMult;
+		ofShader shader;
     
 		
 		static string safe_string(string str) {

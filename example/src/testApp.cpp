@@ -1,11 +1,15 @@
 #include "testApp.h"
 
 //--------------------------------------------------------------
-void testApp::setup(){	
+void testApp::setup(){
+	
     ofBackground(0, 0, 0);
     ofSetVerticalSync(true);
-    
-    ofEnableNormalizedTexCoords(); // You can also use ARB mode
+	
+	ofSetLogLevel(OF_LOG_VERBOSE);
+	
+	ofEnableNormalizedTexCoords();
+	ofDisableArbTex();
     
     // We will use this flag to decide if we should draw the GUI or not
     drawGui = true;    
@@ -18,7 +22,7 @@ void testApp::setup(){
     ofVec2f size(texture->getWidth(), texture->getHeight());
     
     // Subsection of the texture coordinates
-    ofRectangle subsection(ofPoint(0.5,0.0), ofPoint(1.0,1.0));
+    //ofRectangle subsection(ofPoint(0.5,0.0), ofPoint(1.0,1.0));
     
     // Inital perspective corners position (order is top-left, top-right, bottom-left, bottom-right).
     // In this example, let's position it agains the right corner of the screen.
@@ -40,7 +44,7 @@ void testApp::setup(){
     float guiHeight = 15;
     
     // Setup!
-    controller.setup(texture, size, subsection, corners, name, guiWidth, guiHeight);
+    controller.setup(texture, size, ofRectangle(0, 0, 0, 0), corners, name, guiWidth, guiHeight);
 }
 
 //--------------------------------------------------------------
