@@ -146,22 +146,34 @@ void Controller::setup(ofTexture * texture, ofVec2f originalSize, ofRectangle or
     gui.add(rows);
     
     ofxFloatSlider * startX = new ofxFloatSlider();
-    startX->setup("UV Start X", originalCoordinates.x, originalCoordinates.x, originalCoordinates.x+originalCoordinates.width, guiWidth, guiHeight);
+	float startXmin = originalCoordinates.x;
+	float startXmax = originalCoordinates.x+originalCoordinates.width;
+	float startXmargin = (startXmax - startXmin) * 0.3333;
+    startX->setup("UV Start X", startXmin, startXmin - startXmargin, startXmax + startXmargin, guiWidth, guiHeight);
     startX->addListener(this, &Controller::onCoordinatesChange);
     gui.add(startX);
     
     ofxFloatSlider * startY = new ofxFloatSlider();
-    startY->setup("UV Start Y", originalCoordinates.y, originalCoordinates.y, originalCoordinates.y+originalCoordinates.height, guiWidth, guiHeight);
+	float startYmin = originalCoordinates.y;
+	float startYmax = originalCoordinates.y+originalCoordinates.height;
+	float startYmargin = (startYmax - startYmin) * 0.3333;
+    startY->setup("UV Start Y", startYmin, startYmin - startYmargin, startYmax + startYmargin, guiWidth, guiHeight);
     startY->addListener(this, &Controller::onCoordinatesChange);
     gui.add(startY);
     
     ofxFloatSlider * endX = new ofxFloatSlider();
-    endX->setup("UV End X", originalCoordinates.x+originalCoordinates.width, originalCoordinates.x, originalCoordinates.x+originalCoordinates.width, guiWidth, guiHeight);
+	float endXmin = originalCoordinates.x;
+	float endXmax = originalCoordinates.x+originalCoordinates.width;
+	float endXmargin = (endXmax - endXmin) * 0.3333;
+    endX->setup("UV End X", endXmax, endXmin - endXmargin, endXmax + endXmargin, guiWidth, guiHeight);
     endX->addListener(this, &Controller::onCoordinatesChange);
     gui.add(endX);
     
     ofxFloatSlider * endY = new ofxFloatSlider();
-    endY->setup("UV End Y", originalCoordinates.y+originalCoordinates.height, originalCoordinates.y, originalCoordinates.y+originalCoordinates.height, guiWidth, guiHeight);
+	float endYmin = originalCoordinates.y;
+	float endYmax = originalCoordinates.y+originalCoordinates.height;
+	float endYmargin = (endYmax - endYmin) * 0.3333;
+    endY->setup("UV End Y", endYmax, endYmin - endYmargin, endYmax + endYmargin, guiWidth, guiHeight);
     endY->addListener(this, &Controller::onCoordinatesChange);
     gui.add(endY);
 	
