@@ -10,6 +10,8 @@ public:
     void draw();
     
     void keyPressed(int key);
+	
+	ofFbo fbo;
     
     ofImage testcard;
 	ofxWarpBlendTool::Controller controller;
