@@ -406,8 +406,8 @@ void Controller::drawGui(){
     texCoords.y = ofMap(transformed.y, 0, getWindowHeight(), 0, texSize.y, true) + coordinatesStart.y;
     string texX = ofToString(texCoords.x);
     string texY = ofToString(texCoords.y);
-	ofDrawBitmapString("tex:   x " + texX+"\n       y "+texY, ofPoint(5, guiHelperFbo.getHeight()/2 - 10));
-	ofDrawBitmapString("mouse: x " + ofToString((int)mouse.x)+"\n       y "+ofToString((int)mouse.y), ofPoint(5, guiHelperFbo.getHeight() - 15));
+	ofDrawBitmapString("tex:   x " + texX+"\n       y "+texY, ofPoint(5, guiHelperFbo.getHeight()/2 - 15));
+	ofDrawBitmapString("mouse: x " + ofToString((int)mouse.x)+"\n       y "+ofToString((int)mouse.y), ofPoint(5, guiHelperFbo.getHeight() - 20));
 	ofPopStyle();
 	guiHelperFbo.end();
 	
@@ -417,11 +417,11 @@ void Controller::drawGui(){
 	if (perspective.getCorner(ofxGLWarper::BOTTOM_RIGHT).x - mouse.x < guiHelperFbo.getWidth()*helperScale) {
 		ofTranslate(-guiHelperFbo.getWidth()*helperScale, 0);
 	}
-	if (perspective.getCorner(ofxGLWarper::BOTTOM_RIGHT).y - mouse.y > guiHelperFbo.getHeight()*helperScale) {
-		ofTranslate(0, guiHelperFbo.getHeight()*helperScale);
+	if (perspective.getCorner(ofxGLWarper::BOTTOM_RIGHT).y - mouse.y < guiHelperFbo.getHeight()*helperScale) {
+		ofTranslate(0, -guiHelperFbo.getHeight()*helperScale);
 	}
 	ofScale(helperScale, helperScale);
-	guiHelperFbo.draw(0, 0, guiHelperFbo.getTextureReference().getWidth(), -guiHelperFbo.getTextureReference().getHeight());
+	guiHelperFbo.draw(0, 0, guiHelperFbo.getTextureReference().getWidth(), guiHelperFbo.getTextureReference().getHeight());
 	ofPopMatrix();
 	
 	ofPushStyle();
