@@ -1,7 +1,7 @@
-#include "testApp.h"
+#include "ofApp.h"
 
 //--------------------------------------------------------------
-void testApp::setup(){
+void ofApp::setup(){
 	
     ofBackground(0, 0, 0);
     ofSetVerticalSync(true);
@@ -12,14 +12,14 @@ void testApp::setup(){
 	ofDisableArbTex();
     
     // We will use this flag to decide if we should draw the GUI or not
-    drawGui = true;    
+    drawGui = true;
     
     // Pointer to the texture
     testcard.loadImage("testcard.png");
     ofTexture * texture = &(testcard.getTextureReference());
     
     // Size of the quad you will work with
-    ofVec2f size(texture->getWidth(), texture->getHeight());
+    ofVec2f size(testcard.getWidth(), testcard.getHeight());
     
     // Subsection of the texture coordinates
     //ofRectangle subsection(ofPoint(0.5,0.0), ofPoint(1.0,1.0));
@@ -27,14 +27,14 @@ void testApp::setup(){
     // Inital perspective corners position (order is top-left, top-right, bottom-left, bottom-right).
     // In this example, let's position it agains the right corner of the screen.
     ofPoint corners[4];
-    corners[0].x = ofGetWidth() - texture->getWidth();
+    corners[0].x = ofGetWidth() - testcard.getWidth();
     corners[0].y = 0;
     corners[1].x = ofGetWidth();
     corners[1].y = 0;
     corners[2].x = ofGetWidth();
-    corners[2].y = texture->getHeight();
-    corners[3].x = ofGetWidth() - texture->getWidth();
-    corners[3].y = texture->getHeight();
+    corners[2].y = testcard.getHeight();
+    corners[3].x = ofGetWidth() - testcard.getWidth();
+    corners[3].y = testcard.getHeight();
     
     // Name for the controller panel (this will also define the folder in which the data will be saved)
     string name = "Warp/Blend";
@@ -48,7 +48,7 @@ void testApp::setup(){
 }
 
 //--------------------------------------------------------------
-void testApp::draw(){
+void ofApp::draw(){
     ofSetColor(255);
     controller.draw();
 	if(drawGui)controller.drawGui();
@@ -74,7 +74,7 @@ void testApp::draw(){
 }
 
 //--------------------------------------------------------------
-void testApp::keyPressed(int key){
+void ofApp::keyPressed(int key){
 	if(key == ' ') ofToggleFullscreen();
     if(key == 'g' || key == 'G') drawGui = !drawGui;
 }

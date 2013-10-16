@@ -95,10 +95,10 @@ namespace ofxWarpBlendTool {
         string safename;
         string guiFile, perspectiveFile, meshFile;
         
-		void onSave(bool & value);
-		void onLoad(bool & value);
-        void onResetPerspective(bool &value);
-        void onResetMesh(bool &value);
+		void onSave();
+		void onLoad();
+        void onResetPerspective();
+        void onResetMesh();
 		void onBlendChange(float & value);
 		void onGridChange(int & value);
 		void onCoordinatesChange(float & value);

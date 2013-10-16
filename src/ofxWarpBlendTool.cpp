@@ -266,8 +266,7 @@ void Controller::setup(ofTexture * texture, ofVec2f originalSize, ofRectangle or
 	shader.linkProgram();
 	
 	// load settings
-	bool dummy = true;
-	onLoad(dummy);
+	onLoad();
 	
 	
 }
@@ -755,17 +754,17 @@ void Controller::loadPerspective(ofxXmlSettings & handler){
 }
 
 void Controller::saveGUI(ofxXmlSettings & handler){
-	gui.saveToXml(handler);
+	gui.saveTo(handler);
 }
 void Controller::loadGUI(ofxXmlSettings & handler){
-	gui.loadFromXml(handler);
+	gui.loadFrom(handler);
     bool dummyb=0;
 	int dummyi=0;
 	float dummyf=0;
 	onGridChange(dummyi); // will also update the coordinates;
-	onEnablePerspective(gui.getToggle("Perspective Warp"));
+	onEnablePerspective((bool&)gui.getToggle("Perspective Warp"));
 	onBlendChange(dummyf);
-    onScissorEnabled(gui.getToggle("Scissor Active"));
+    onScissorEnabled((bool&)gui.getToggle("Scissor Active"));
     onScissorChange(dummyi);
 	onPostProcessingValueChanged(dummyf);
 }
@@ -814,80 +813,71 @@ void Controller::loadHistoryEntry(int index){
 	loadVertices(entry->verticesData);
 }
 
-void Controller::onSave(bool &value){
-	if(value){
-        ofDirectory::createDirectory(safename, true, true);
+void Controller::onSave(){
+    ofDirectory::createDirectory(safename, true, true);
         
-		ofxXmlSettings perspectiveSettings;
-		savePerspective(perspectiveSettings);
-		perspectiveSettings.saveFile(perspectiveFile);
+    ofxXmlSettings perspectiveSettings;
+    savePerspective(perspectiveSettings);
+    perspectiveSettings.saveFile(perspectiveFile);
 		
-		ofxXmlSettings guiSettings;
-		saveGUI(guiSettings);
-		guiSettings.saveFile(guiFile);
+    ofxXmlSettings guiSettings;
+    saveGUI(guiSettings);
+    guiSettings.saveFile(guiFile);
 		
-		const int numControlQuads = controlQuads.size();
-		const int controlQuadSize = 8 + 1;  // points + index
-		const int numInternalQuads = (resolution.x) * (resolution.y);
-		const int internalQuadSize = 8 + 2 + 1; // points + xy + index
-		const int dataSize = numControlQuads * controlQuadSize + (numControlQuads * numInternalQuads) * internalQuadSize;
-		float * data = new float[dataSize];
-		saveVertices(data);
-		ofFile writeFile;
-		if(writeFile.open(meshFile, ofFile::WriteOnly, true)){
-			writeFile.write((char*) data, sizeof(float) * dataSize );
-		}
-		delete data;
-	}
+    const int numControlQuads = controlQuads.size();
+    const int controlQuadSize = 8 + 1;  // points + index
+    const int numInternalQuads = (resolution.x) * (resolution.y);
+    const int internalQuadSize = 8 + 2 + 1; // points + xy + index
+    const int dataSize = numControlQuads * controlQuadSize + (numControlQuads * numInternalQuads) * internalQuadSize;
+    float * data = new float[dataSize];
+    saveVertices(data);
+    ofFile writeFile;
+    if(writeFile.open(meshFile, ofFile::WriteOnly, true)){
+        writeFile.write((char*) data, sizeof(float) * dataSize );
+    }
+    delete data;
 }
-void Controller::onLoad(bool &value){
-	if(value){
-		// Check if there is no saved file, if not reset
-		ofxXmlSettings perspectiveSettings;
-		if(perspectiveSettings.loadFile(perspectiveFile)){
-			loadPerspective(perspectiveSettings);
-		}
-		else{
-			resetPerspective(false); // false means we wont generate a history entry
-		}
+void Controller::onLoad(){
+    // Check if there is no saved file, if not reset
+    ofxXmlSettings perspectiveSettings;
+    if(perspectiveSettings.loadFile(perspectiveFile)){
+        loadPerspective(perspectiveSettings);
+    }
+    else{
+        resetPerspective(false); // false means we wont generate a history entry
+    }
 		
-		ofxXmlSettings guiSettings;
-		guiSettings.loadFile(guiFile);
-		loadGUI(guiSettings);
+    ofxXmlSettings guiSettings;
+    guiSettings.loadFile(guiFile);
+    loadGUI(guiSettings);
 		
 		
-		fstream readFile;
-		readFile.open(ofToDataPath(meshFile).c_str(), ios::in | ios::binary);
-		if(readFile.good()){
+    fstream readFile;
+    readFile.open(ofToDataPath(meshFile).c_str(), ios::in | ios::binary);
+    if(readFile.good()){
 			
-			const int numControlQuads = controlQuads.size();
-			const int controlQuadSize = 8 + 1;  // points + index
-			const int numInternalQuads = (resolution.x) * (resolution.y);
-			const int internalQuadSize = 8 + 2 + 1; // points + xy + index
-			const int dataSize = numControlQuads * controlQuadSize + (numControlQuads * numInternalQuads) * internalQuadSize;
-			float * data = new float[dataSize];
-			readFile.read((char*)data, sizeof(float) * dataSize);
-			loadVertices(data);
-			delete data;
+        const int numControlQuads = controlQuads.size();
+        const int controlQuadSize = 8 + 1;  // points + index
+        const int numInternalQuads = (resolution.x) * (resolution.y);
+        const int internalQuadSize = 8 + 2 + 1; // points + xy + index
+        const int dataSize = numControlQuads * controlQuadSize + (numControlQuads * numInternalQuads) * internalQuadSize;
+        float * data = new float[dataSize];
+        readFile.read((char*)data, sizeof(float) * dataSize);
+        loadVertices(data);
+        delete data;
 			
-		}else{
-			ofLogWarning("ofxWarpBlendTool::Controller:: unable to load mesh file: "+meshFile);
-		}
+    }else{
+        ofLogWarning("ofxWarpBlendTool::Controller:: unable to load mesh file: "+meshFile);
+    }
 		
-		// Save initial history entry
-		saveHistoryEntry();
-		
-	}
+    // Save initial history entry
+    saveHistoryEntry();
 }
-void Controller::onResetPerspective(bool &value){
-	if(value){
-        resetPerspective();
-	}
+void Controller::onResetPerspective(){
+	resetPerspective();
 }
-void Controller::onResetMesh(bool &value){
-	if(value){
-        resetVertices();
-	}
+void Controller::onResetMesh(){
+	resetVertices();
 }
 void Controller::onBlendChange(float & value){
 	if(blendT == gui.getFloatSlider("Blend Top")
@@ -1022,19 +1012,6 @@ void Controller::onCoordinatesChange(float & value){
 	coordinatesEnd.x =  gui.getFloatSlider("UV End X");
 	coordinatesEnd.y =  gui.getFloatSlider("UV End Y");
 	
-	if(ofGetUsingNormalizedTexCoords()){
-		// openframeworks is mental with normalized coordinates inside a shader...
-		// a shame.. but here is the dirty hack
-		float capX = texture->getWidth() / ofNextPow2(texture->getWidth());
-		float capY = texture->getHeight() / ofNextPow2(texture->getHeight());
-		
-		coordinatesStart.x =  ofMap(coordinatesStart.x, 0, 1, 0, capX);
-		coordinatesStart.y =  ofMap(coordinatesStart.y, 0, 1, 0, capY);
-		coordinatesEnd.x =  ofMap(coordinatesEnd.x, 0, 1, 0, capX);
-		coordinatesEnd.y =  ofMap(coordinatesEnd.y, 0, 1, 0, capY);
-	}
-
-    
 	internalMesh.clearTexCoords();
 	
     ofVec2f uvSize = coordinatesEnd - coordinatesStart;
@@ -1174,9 +1151,8 @@ void Controller::keyPressed(ofKeyEventArgs & args){
         }
     }
 #endif
-    bool dummy = true;
-    if(load) onLoad(dummy);
-    if(save) onSave(dummy);
+    if(load) onLoad();
+    if(save) onSave();
     
 }
 void Controller::keyReleased(ofKeyEventArgs & args){

@@ -3,8 +3,7 @@
 #include "ofMain.h"
 #include "ofxWarpBlendTool.h"
 
-
-class testApp : public ofBaseApp{
+class ofApp : public ofBaseApp{
 public:
     void setup();
     void draw();
