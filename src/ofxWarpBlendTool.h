@@ -2,7 +2,7 @@
 #include "ofMain.h"
 #include "ofxWarpBlendToolShaders.h"
 #include "ofxGui.h"
-#include "ofxGlWarper.h"
+#include "ofxGLWarper.h"
 #include "ofxModifierKeys.h"
 
 #define OFX_WARP_BLEND_TOOL_MAX_HISTORY 100
@@ -56,6 +56,9 @@ namespace ofxWarpBlendTool {
 		void mouseDragged(ofMouseEventArgs & args);
 		void mousePressed(ofMouseEventArgs & args);
 		void mouseReleased(ofMouseEventArgs & args);
+		void mouseScrolled(ofMouseEventArgs &mouse) { ; }
+		void mouseEntered(ofMouseEventArgs &mouse) { ; }
+		void mouseExited(ofMouseEventArgs &mouse) { ; }
         
         float getWindowWidth();
         float getWindowHeight();
