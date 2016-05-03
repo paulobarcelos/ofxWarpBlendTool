@@ -1094,7 +1094,7 @@ void Controller::keyPressed(ofKeyEventArgs & args){
 #endif
 #ifdef TARGET_LINUX
     if(args.key =='z' || args.key =='Z'){
-        if (ofGetModifierPressed(OF_KEY_CTRL)){
+        if (ofGetModifierPressed(OF_KEY_CONTROL)){
             if(ofGetModifierPressed(OF_KEY_SHIFT)){
                 redo = true;
             }
@@ -1106,7 +1106,7 @@ void Controller::keyPressed(ofKeyEventArgs & args){
 #endif
 #ifdef TARGET_WIN32
     if(args.key =='z' || args.key =='Z'){
-        if (ofGetModifierPressed(OF_KEY_CTRL)){
+        if (ofGetModifierPressed(OF_KEY_CONTROL)){
             if(ofGetModifierPressed(OF_KEY_SHIFT)){
                 redo = true;
             }
@@ -1116,7 +1116,7 @@ void Controller::keyPressed(ofKeyEventArgs & args){
         }
     }
     if(args.key =='y' || args.key =='Y'){
-        if (ofGetModifierPressed(OF_KEY_CTRL)){
+        if (ofGetModifierPressed(OF_KEY_CONTROL)){
             redo = true;   
         }
     }
@@ -1141,12 +1141,12 @@ void Controller::keyPressed(ofKeyEventArgs & args){
     }
 #else
     if(args.key =='r' || args.key =='S'){
-        if (ofGetModifierPressed(OF_KEY_CTRL)){
+        if (ofGetModifierPressed(OF_KEY_CONTROL)){
             load = true;
         }
     }
     if(args.key =='s' || args.key =='S'){
-        if (ofGetModifierPressed(OF_KEY_CTRL)){
+        if (ofGetModifierPressed(OF_KEY_CONTROL)){
             save = true;
         }
     }
