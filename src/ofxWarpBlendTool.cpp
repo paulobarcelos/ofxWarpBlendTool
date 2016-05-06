@@ -291,47 +291,43 @@ void Controller::draw(){
 	internalMesh.draw();
 	
 	shader.end();
-	
-	if(blendT>0){
-		glBegin(GL_TRIANGLE_STRIP);
-		glColor4f(0, 0, 0, 1);
-		glVertex3f( 0.0f, 0.0f, 0.0f );
-		glVertex3f( getWindowWidth(), 0.0f, 0.0f );
-		glColor4f(0, 0, 0, 0);
-		glVertex3f( 0.0f, blendT*getWindowHeight(), 0.0f );
-		glVertex3f( getWindowWidth(), blendT*getWindowHeight(), 0.0f );
-		glEnd();
-	}
-	if(blendB>0){
-		glBegin(GL_TRIANGLE_STRIP);
-		glColor4f(0, 0, 0, 1);
-		glVertex3f( 0.0f, getWindowHeight(), 0.0f );
-		glVertex3f( getWindowWidth(), getWindowHeight(), 0.0f );
-		glColor4f(0, 0, 0, 0);
-		glVertex3f( 0.0f, getWindowHeight() - blendB*getWindowHeight(), 0.0f );
-		glVertex3f( getWindowWidth(), getWindowHeight() - blendB*getWindowHeight(), 0.0f );
-		glEnd();
-	}
-	if(blendL>0){
-		glBegin(GL_TRIANGLE_STRIP);
-		glColor4f(0, 0, 0, 1);
-		glVertex3f( 0.0f, 0.0f, 0.0f );
-		glVertex3f( 0.0f,  getWindowHeight(), 0.0f );
-		glColor4f(0, 0, 0, 0);
-		glVertex3f( blendL*getWindowHeight(), 0.0f, 0.0f );
-		glVertex3f( blendL*getWindowHeight(),  getWindowHeight(), 0.0f );
-		glEnd();
-	}
-	if(blendR>0){
-		glBegin(GL_TRIANGLE_STRIP);
-		glColor4f(0, 0, 0, 1);
-		glVertex3f( getWindowWidth(), 0.0f, 0.0f );
-		glVertex3f( getWindowWidth(), getWindowHeight(), 0.0f );
-		glColor4f(0, 0, 0, 0);
-		glVertex3f( getWindowWidth() - blendR*getWindowHeight(), 0.0f, 0.0f );
-		glVertex3f( getWindowWidth() - blendR*getWindowHeight(), getWindowHeight(), 0.0f );
-		glEnd();
-	}
+
+        ofMesh mesh;
+        mesh.setMode(OF_PRIMITIVE_TRIANGLE_STRIP);
+        if(blendT>0){
+            mesh.addColor(ofFloatColor(0,0,0,1));
+            mesh.addVertex(ofPoint(0,0,0));
+            mesh.addVertex(ofPoint(getWindowWidth(), 0, 0));
+            mesh.addColor(ofFloatColor(0,0,0,0));
+            mesh.addVertex(ofPoint( 0.0f, blendT*getWindowHeight(), 0.0f ));
+            mesh.addVertex(ofPoint( getWindowWidth(), blendT*getWindowHeight(), 0.0f ));
+        }
+        if(blendB>0){
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
+            mesh.addVertex(ofPoint( 0.0f, getWindowHeight(), 0.0f ));
+            mesh.addVertex(ofPoint( getWindowWidth(), getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
+            mesh.addVertex(ofPoint( 0.0f, getWindowHeight() - blendB*getWindowHeight(), 0.0f ));
+            mesh.addVertex(ofPoint( getWindowWidth(), getWindowHeight() - blendB*getWindowHeight(), 0.0f ));
+        }
+        if(blendL>0){
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
+            mesh.addVertex(ofPoint( 0.0f, 0.0f, 0.0f ));
+            mesh.addVertex(ofPoint( 0.0f,  getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
+            mesh.addVertex(ofPoint( blendL*getWindowHeight(), 0.0f, 0.0f ));
+            mesh.addVertex(ofPoint( blendL*getWindowHeight(),  getWindowHeight(), 0.0f ));
+        }
+        if(blendR>0){
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
+            mesh.addVertex(ofPoint( getWindowWidth(), 0.0f, 0.0f ));
+            mesh.addVertex(ofPoint( getWindowWidth(), getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
+            mesh.addVertex(ofPoint( getWindowWidth() - blendR*getWindowHeight(), 0.0f, 0.0f ));
+            mesh.addVertex(ofPoint( getWindowWidth() - blendR*getWindowHeight(), getWindowHeight(), 0.0f ));
+        }
+
+        mesh.draw();
 	
 	perspective.end();
     
