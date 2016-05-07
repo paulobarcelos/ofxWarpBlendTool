@@ -260,10 +260,18 @@ void Controller::setup(ofTexture * texture, ofVec2f originalSize, ofRectangle or
     
 	
 	// Post processing
-	shader.setupShaderFromSource(GL_VERTEX_SHADER, VertShader);
+    if(ofIsGLProgrammableRenderer()){
+	shader.setupShaderFromSource(GL_VERTEX_SHADER, VertShaderProgrammable);
+	if(ofGetUsingNormalizedTexCoords()) shader.setupShaderFromSource(GL_FRAGMENT_SHADER, NormalizedFragShaderProgrammable);
+	else shader.setupShaderFromSource(GL_FRAGMENT_SHADER, UnnormalizedFragShaderProgrammable);
+	shader.linkProgram();
+    }
+    else {
+        shader.setupShaderFromSource(GL_VERTEX_SHADER, VertShader);
 	if(ofGetUsingNormalizedTexCoords()) shader.setupShaderFromSource(GL_FRAGMENT_SHADER, NormalizedFragShader);
 	else shader.setupShaderFromSource(GL_FRAGMENT_SHADER, UnnormalizedFragShader);
 	shader.linkProgram();
+    }
 	
 	// load settings
 	onLoad();
@@ -938,6 +946,7 @@ void Controller::onGridChange(int & value){
 	}
     controlMesh.clearVertices();
     internalMesh.clearVertices();
+    internalMesh.clearColors();
     
     ofVec2f c_Size(getWindowWidth() / gridSize.x, getWindowHeight() / gridSize.y);
     ofVec2f i_Size = c_Size / resolution;
