@@ -4,27 +4,30 @@
 
 namespace ofxWarpBlendTool {
 
-static string VertShaderProgrammable = "#version 150\n" STRINGIFY(
-    uniform mat4 modelViewProjectionMatrix;
-            
-    in vec4  position;
-    in vec2  texcoord;
-    in vec4  color;
-            
-    out vec4 colorVarying;
-    out vec2 texCoordVarying;
-            
-    void main()
-    {
-        colorVarying = color;
-        texCoordVarying = texcoord;
-        gl_Position = modelViewProjectionMatrix * position;
-    }
-    );
+static const string VertShaderProgrammable = "#version 150\n" STRINGIFY(
+	uniform mat4 modelViewProjectionMatrix;
 
-static string NormalizedFragShaderProgrammable = "#version 150\n" STRINGIFY(
-    uniform sampler2D tex0;
+	in vec4  position;
+	in vec2  texcoord;
+	in vec4  color;
+	in vec3  normal;
+
+	out vec4 colorVarying;
+	out vec2 texCoordVarying;
+	out vec4 normalVarying;
+
+	void main()
+	{
+		colorVarying = color;
+		texCoordVarying = texcoord; 
+		gl_Position = modelViewProjectionMatrix * position;
+	}
+);
+
+static const string NormalizedFragShaderProgrammable =  "#version 150\n" STRINGIFY(
+    out vec4 fragColor;
     
+    uniform sampler2D tex0;
     uniform float sat;
     uniform float brt;
     uniform float con;
@@ -32,7 +35,11 @@ static string NormalizedFragShaderProgrammable = "#version 150\n" STRINGIFY(
     uniform float rMult;
     uniform float gMult;
     uniform float bMult;
-												   
+    
+    in float depth;
+    in vec4 colorVarying;
+    in vec2 texCoordVarying;
+
     vec4 gammaCorrection(vec3 color, vec3 gamma){				   
         return vec4( pow(color.r, gamma.r), pow(color.g, gamma.g), pow(color.b, gamma.b), 1.0 );			}
 												   
@@ -52,23 +59,18 @@ static string NormalizedFragShaderProgrammable = "#version 150\n" STRINGIFY(
         vec3 conColor = mix(AvgLumin, satColor, con);
         return conColor;
     }
-
-    in vec4 colorVarying;
-    in vec2 texCoordVarying;				 
-    out vec4 fragColor;           
-												   
-    void main(void){
-        vec4 texture = texture2D(tex0, texCoordVarying);
+    
+    void main(){
+        vec4 texture = texture(tex0, texCoordVarying);
         fragColor = vec4(ContrastSaturationBrightness(texture.rgb,brt,sat,con),texture.a);
         fragColor.rgb = vec3(fragColor.r*rMult, fragColor.g*gMult, fragColor.b*bMult);
-        fragColor = vec4(texCoordVarying.x, texCoordVarying.y, 0, 1);
     }
-												   
-    );
+);
 
-static string UnnormalizedFragShaderProgrammable = "#version 150\n" STRINGIFY(
-    uniform sampler2DRect tex0;
+static const string UnnormalizedFragShaderProgrammable =  "#version 150\n" STRINGIFY(
+    out vec4 fragColor;
     
+    uniform sampler2DRect tex0;
     uniform float sat;
     uniform float brt;
     uniform float con;
@@ -76,7 +78,11 @@ static string UnnormalizedFragShaderProgrammable = "#version 150\n" STRINGIFY(
     uniform float rMult;
     uniform float gMult;
     uniform float bMult;
-												   
+    
+    in float depth;
+    in vec4 colorVarying;
+    in vec2 texCoordVarying;
+
     vec4 gammaCorrection(vec3 color, vec3 gamma){				   
         return vec4( pow(color.r, gamma.r), pow(color.g, gamma.g), pow(color.b, gamma.b), 1.0 );			}
 												   
@@ -96,18 +102,13 @@ static string UnnormalizedFragShaderProgrammable = "#version 150\n" STRINGIFY(
         vec3 conColor = mix(AvgLumin, satColor, con);
         return conColor;
     }
-
-    in vec4 colorVarying;
-    in vec2 texCoordVarying;				 
-    out vec4 fragColor;           
-												   
-    void main(void){
+    
+    void main(){
         vec4 texture = texture2DRect(tex0, texCoordVarying);
         fragColor = vec4(ContrastSaturationBrightness(texture.rgb,brt,sat,con),texture.a);
         fragColor.rgb = vec3(fragColor.r*rMult, fragColor.g*gMult, fragColor.b*bMult);
     }
-												   
-    );
+);
 
 static string VertShader = STRINGIFY(
     void main(void){

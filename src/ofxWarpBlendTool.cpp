@@ -263,7 +263,8 @@ void Controller::setup(ofTexture * texture, ofVec2f originalSize, ofRectangle or
     if(ofIsGLProgrammableRenderer()){
 	shader.setupShaderFromSource(GL_VERTEX_SHADER, VertShaderProgrammable);
 	if(ofGetUsingNormalizedTexCoords()) shader.setupShaderFromSource(GL_FRAGMENT_SHADER, NormalizedFragShaderProgrammable);
-	else shader.setupShaderFromSource(GL_FRAGMENT_SHADER, UnnormalizedFragShaderProgrammable);
+        else shader.setupShaderFromSource(GL_FRAGMENT_SHADER, UnnormalizedFragShaderProgrammable);
+        shader.bindDefaults();
 	shader.linkProgram();
     }
     else {
@@ -285,9 +286,11 @@ void Controller::draw(){
     }
     
 	perspective.begin();
-	
+
+
+         
 	shader.begin();
-	
+        
 	shader.setUniformTexture("tex0", *texture, 0 );
 	shader.setUniform1f("brt", postBrt );
 	shader.setUniform1f("sat", postSat );
@@ -297,8 +300,9 @@ void Controller::draw(){
 	shader.setUniform1f("bMult", postBMult );
 
 	internalMesh.draw();
-	
-	shader.end();
+
+        shader.end();
+
 
         ofMesh mesh;
         mesh.setMode(OF_PRIMITIVE_TRIANGLE_STRIP);
@@ -1001,9 +1005,9 @@ void Controller::onGridChange(int & value){
                     internalMesh.addVertex(i_quad->BL);
                     internalMesh.addVertex(i_quad->TR);
                     
-					internalMesh.addVertex(i_quad->TR);
-					internalMesh.addVertex(i_quad->BL);
-					internalMesh.addVertex(i_quad->BR);
+                    internalMesh.addVertex(i_quad->TR);
+                    internalMesh.addVertex(i_quad->BL);
+                    internalMesh.addVertex(i_quad->BR);
 					
                     internalMesh.addColor(ofFloatColor(1.0,1.0,1.0,1.0));
                     internalMesh.addColor(ofFloatColor(1.0,1.0,1.0,1.0));
