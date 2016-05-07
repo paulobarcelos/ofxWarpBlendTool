@@ -297,37 +297,51 @@ void Controller::draw(){
         if(blendT>0){
             mesh.addColor(ofFloatColor(0,0,0,1));
             mesh.addVertex(ofPoint(0,0,0));
+            mesh.addColor(ofFloatColor(0,0,0,1));
             mesh.addVertex(ofPoint(getWindowWidth(), 0, 0));
             mesh.addColor(ofFloatColor(0,0,0,0));
             mesh.addVertex(ofPoint( 0.0f, blendT*getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0,0,0,0));
             mesh.addVertex(ofPoint( getWindowWidth(), blendT*getWindowHeight(), 0.0f ));
+            mesh.draw();
+            mesh.clear();
         }
         if(blendB>0){
             mesh.addColor(ofFloatColor(0, 0, 0, 1));
             mesh.addVertex(ofPoint( 0.0f, getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
             mesh.addVertex(ofPoint( getWindowWidth(), getWindowHeight(), 0.0f ));
             mesh.addColor(ofFloatColor(0, 0, 0, 0));
             mesh.addVertex(ofPoint( 0.0f, getWindowHeight() - blendB*getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
             mesh.addVertex(ofPoint( getWindowWidth(), getWindowHeight() - blendB*getWindowHeight(), 0.0f ));
+            mesh.draw();
+            mesh.clear();
         }
         if(blendL>0){
             mesh.addColor(ofFloatColor(0, 0, 0, 1));
             mesh.addVertex(ofPoint( 0.0f, 0.0f, 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
             mesh.addVertex(ofPoint( 0.0f,  getWindowHeight(), 0.0f ));
             mesh.addColor(ofFloatColor(0, 0, 0, 0));
             mesh.addVertex(ofPoint( blendL*getWindowHeight(), 0.0f, 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
             mesh.addVertex(ofPoint( blendL*getWindowHeight(),  getWindowHeight(), 0.0f ));
+            mesh.draw();
+            mesh.clear();
         }
         if(blendR>0){
             mesh.addColor(ofFloatColor(0, 0, 0, 1));
             mesh.addVertex(ofPoint( getWindowWidth(), 0.0f, 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
             mesh.addVertex(ofPoint( getWindowWidth(), getWindowHeight(), 0.0f ));
             mesh.addColor(ofFloatColor(0, 0, 0, 0));
             mesh.addVertex(ofPoint( getWindowWidth() - blendR*getWindowHeight(), 0.0f, 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
             mesh.addVertex(ofPoint( getWindowWidth() - blendR*getWindowHeight(), getWindowHeight(), 0.0f ));
+            mesh.draw();
+            mesh.clear();
         }
-
-        mesh.draw();
 	
 	perspective.end();
     
