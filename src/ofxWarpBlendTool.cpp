@@ -260,10 +260,19 @@ void Controller::setup(ofTexture * texture, ofVec2f originalSize, ofRectangle or
     
 	
 	// Post processing
-	shader.setupShaderFromSource(GL_VERTEX_SHADER, VertShader);
+    if(ofIsGLProgrammableRenderer()){
+	shader.setupShaderFromSource(GL_VERTEX_SHADER, VertShaderProgrammable);
+	if(ofGetUsingNormalizedTexCoords()) shader.setupShaderFromSource(GL_FRAGMENT_SHADER, NormalizedFragShaderProgrammable);
+        else shader.setupShaderFromSource(GL_FRAGMENT_SHADER, UnnormalizedFragShaderProgrammable);
+        shader.bindDefaults();
+	shader.linkProgram();
+    }
+    else {
+        shader.setupShaderFromSource(GL_VERTEX_SHADER, VertShader);
 	if(ofGetUsingNormalizedTexCoords()) shader.setupShaderFromSource(GL_FRAGMENT_SHADER, NormalizedFragShader);
 	else shader.setupShaderFromSource(GL_FRAGMENT_SHADER, UnnormalizedFragShader);
 	shader.linkProgram();
+    }
 	
 	// load settings
 	onLoad();
@@ -277,9 +286,11 @@ void Controller::draw(){
     }
     
 	perspective.begin();
-	
+
+
+         
 	shader.begin();
-	
+        
 	shader.setUniformTexture("tex0", *texture, 0 );
 	shader.setUniform1f("brt", postBrt );
 	shader.setUniform1f("sat", postSat );
@@ -289,49 +300,60 @@ void Controller::draw(){
 	shader.setUniform1f("bMult", postBMult );
 
 	internalMesh.draw();
-	
-	shader.end();
-	
-	if(blendT>0){
-		glBegin(GL_TRIANGLE_STRIP);
-		glColor4f(0, 0, 0, 1);
-		glVertex3f( 0.0f, 0.0f, 0.0f );
-		glVertex3f( getWindowWidth(), 0.0f, 0.0f );
-		glColor4f(0, 0, 0, 0);
-		glVertex3f( 0.0f, blendT*getWindowHeight(), 0.0f );
-		glVertex3f( getWindowWidth(), blendT*getWindowHeight(), 0.0f );
-		glEnd();
-	}
-	if(blendB>0){
-		glBegin(GL_TRIANGLE_STRIP);
-		glColor4f(0, 0, 0, 1);
-		glVertex3f( 0.0f, getWindowHeight(), 0.0f );
-		glVertex3f( getWindowWidth(), getWindowHeight(), 0.0f );
-		glColor4f(0, 0, 0, 0);
-		glVertex3f( 0.0f, getWindowHeight() - blendB*getWindowHeight(), 0.0f );
-		glVertex3f( getWindowWidth(), getWindowHeight() - blendB*getWindowHeight(), 0.0f );
-		glEnd();
-	}
-	if(blendL>0){
-		glBegin(GL_TRIANGLE_STRIP);
-		glColor4f(0, 0, 0, 1);
-		glVertex3f( 0.0f, 0.0f, 0.0f );
-		glVertex3f( 0.0f,  getWindowHeight(), 0.0f );
-		glColor4f(0, 0, 0, 0);
-		glVertex3f( blendL*getWindowHeight(), 0.0f, 0.0f );
-		glVertex3f( blendL*getWindowHeight(),  getWindowHeight(), 0.0f );
-		glEnd();
-	}
-	if(blendR>0){
-		glBegin(GL_TRIANGLE_STRIP);
-		glColor4f(0, 0, 0, 1);
-		glVertex3f( getWindowWidth(), 0.0f, 0.0f );
-		glVertex3f( getWindowWidth(), getWindowHeight(), 0.0f );
-		glColor4f(0, 0, 0, 0);
-		glVertex3f( getWindowWidth() - blendR*getWindowHeight(), 0.0f, 0.0f );
-		glVertex3f( getWindowWidth() - blendR*getWindowHeight(), getWindowHeight(), 0.0f );
-		glEnd();
-	}
+
+        shader.end();
+
+
+        ofMesh mesh;
+        mesh.setMode(OF_PRIMITIVE_TRIANGLE_STRIP);
+        if(blendT>0){
+            mesh.addColor(ofFloatColor(0,0,0,1));
+            mesh.addVertex(ofPoint(0,0,0));
+            mesh.addColor(ofFloatColor(0,0,0,1));
+            mesh.addVertex(ofPoint(getWindowWidth(), 0, 0));
+            mesh.addColor(ofFloatColor(0,0,0,0));
+            mesh.addVertex(ofPoint( 0.0f, blendT*getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0,0,0,0));
+            mesh.addVertex(ofPoint( getWindowWidth(), blendT*getWindowHeight(), 0.0f ));
+            mesh.draw();
+            mesh.clear();
+        }
+        if(blendB>0){
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
+            mesh.addVertex(ofPoint( 0.0f, getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
+            mesh.addVertex(ofPoint( getWindowWidth(), getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
+            mesh.addVertex(ofPoint( 0.0f, getWindowHeight() - blendB*getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
+            mesh.addVertex(ofPoint( getWindowWidth(), getWindowHeight() - blendB*getWindowHeight(), 0.0f ));
+            mesh.draw();
+            mesh.clear();
+        }
+        if(blendL>0){
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
+            mesh.addVertex(ofPoint( 0.0f, 0.0f, 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
+            mesh.addVertex(ofPoint( 0.0f,  getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
+            mesh.addVertex(ofPoint( blendL*getWindowHeight(), 0.0f, 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
+            mesh.addVertex(ofPoint( blendL*getWindowHeight(),  getWindowHeight(), 0.0f ));
+            mesh.draw();
+            mesh.clear();
+        }
+        if(blendR>0){
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
+            mesh.addVertex(ofPoint( getWindowWidth(), 0.0f, 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 1));
+            mesh.addVertex(ofPoint( getWindowWidth(), getWindowHeight(), 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
+            mesh.addVertex(ofPoint( getWindowWidth() - blendR*getWindowHeight(), 0.0f, 0.0f ));
+            mesh.addColor(ofFloatColor(0, 0, 0, 0));
+            mesh.addVertex(ofPoint( getWindowWidth() - blendR*getWindowHeight(), getWindowHeight(), 0.0f ));
+            mesh.draw();
+            mesh.clear();
+        }
 	
 	perspective.end();
     
@@ -928,6 +950,7 @@ void Controller::onGridChange(int & value){
 	}
     controlMesh.clearVertices();
     internalMesh.clearVertices();
+    internalMesh.clearColors();
     
     ofVec2f c_Size(getWindowWidth() / gridSize.x, getWindowHeight() / gridSize.y);
     ofVec2f i_Size = c_Size / resolution;
@@ -982,9 +1005,9 @@ void Controller::onGridChange(int & value){
                     internalMesh.addVertex(i_quad->BL);
                     internalMesh.addVertex(i_quad->TR);
                     
-					internalMesh.addVertex(i_quad->TR);
-					internalMesh.addVertex(i_quad->BL);
-					internalMesh.addVertex(i_quad->BR);
+                    internalMesh.addVertex(i_quad->TR);
+                    internalMesh.addVertex(i_quad->BL);
+                    internalMesh.addVertex(i_quad->BR);
 					
                     internalMesh.addColor(ofFloatColor(1.0,1.0,1.0,1.0));
                     internalMesh.addColor(ofFloatColor(1.0,1.0,1.0,1.0));
