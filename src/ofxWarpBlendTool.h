@@ -2,7 +2,7 @@
 #include "ofMain.h"
 #include "ofxWarpBlendToolShaders.h"
 #include "ofxGui.h"
-#include "ofxGlWarper.h"
+#include "ofxGLWarper.h"
 #include "ofxModifierKeys.h"
 
 #define OFX_WARP_BLEND_TOOL_MAX_HISTORY 100
