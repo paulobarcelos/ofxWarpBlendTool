@@ -349,10 +349,10 @@ void Controller::drawGui(){
 	ofPushStyle();
 	ofNoFill();
 	ofSetColor(255);
-	if(blendT>0) ofRect(0,0,getWindowWidth(), blendT*getWindowHeight());
-	if(blendB>0) ofRect(0,getWindowHeight() - blendB*getWindowHeight(),getWindowWidth(), blendB*getWindowHeight());
-	if(blendL>0) ofRect(0,0,blendL*getWindowHeight(), getWindowHeight());
-	if(blendR>0) ofRect(getWindowWidth() - blendR*getWindowHeight() ,0,blendR*getWindowHeight(), getWindowHeight());
+	if(blendT>0) ofDrawRectangle(0,0,getWindowWidth(), blendT*getWindowHeight());
+	if(blendB>0) ofDrawRectangle(0,getWindowHeight() - blendB*getWindowHeight(),getWindowWidth(), blendB*getWindowHeight());
+	if(blendL>0) ofDrawRectangle(0,0,blendL*getWindowHeight(), getWindowHeight());
+	if(blendR>0) ofDrawRectangle(getWindowWidth() - blendR*getWindowHeight() ,0,blendR*getWindowHeight(), getWindowHeight());
 	ofPopStyle();
     perspective.end();
 	
@@ -361,17 +361,17 @@ void Controller::drawGui(){
 		ofPushStyle();
 		ofNoFill();
 		ofSetColor(255);
-		ofRect(0, 0, getWindowWidth(), getWindowHeight());
+		ofDrawRectangle(0, 0, getWindowWidth(), getWindowHeight());
 		ofPopStyle();
         perspective.end();
         
         ofPushStyle();
         ofSetColor(255,255,0);
     
-		ofCircle(perspective.fromWarpToScreenCoord(0, 0, 0), 9);
-		ofCircle(perspective.fromWarpToScreenCoord(0, getWindowHeight(), 0), 9);
-		ofCircle(perspective.fromWarpToScreenCoord(getWindowWidth(), 0, 0), 9);
-		ofCircle(perspective.fromWarpToScreenCoord(getWindowWidth(), getWindowHeight(), 0), 9);
+		ofDrawCircle(perspective.fromWarpToScreenCoord(0, 0, 0), 9);
+		ofDrawCircle(perspective.fromWarpToScreenCoord(0, getWindowHeight(), 0), 9);
+		ofDrawCircle(perspective.fromWarpToScreenCoord(getWindowWidth(), 0, 0), 9);
+		ofDrawCircle(perspective.fromWarpToScreenCoord(getWindowWidth(), getWindowHeight(), 0), 9);
 
 		ofPopStyle();
 	}
@@ -384,7 +384,7 @@ void Controller::drawGui(){
             ofPushStyle();
             ofSetColor(controlMesh.getColor(i));
             ofPoint vertex = controlMesh.getVertex(i);
-            ofCircle(perspective.fromWarpToScreenCoord(vertex.x,vertex.y,vertex.z), 9);
+            ofDrawCircle(perspective.fromWarpToScreenCoord(vertex.x,vertex.y,vertex.z), 9);
             ofPopStyle();
         }
         
@@ -420,13 +420,13 @@ void Controller::drawGui(){
 		ofTranslate(0, -guiHelperFbo.getHeight()*helperScale);
 	}
 	ofScale(helperScale, helperScale);
-	guiHelperFbo.draw(0, 0, guiHelperFbo.getTextureReference().getWidth(), guiHelperFbo.getTextureReference().getHeight());
+	guiHelperFbo.draw(0, 0, guiHelperFbo.getTexture().getWidth(), guiHelperFbo.getTexture().getHeight());
 	ofPopMatrix();
 	
 	ofPushStyle();
 	ofSetColor(255, 255, 255);
-	ofLine(mouse.x, 0, mouse.x, ofGetHeight());
-	ofLine(0, mouse.y, ofGetWidth(), mouse.y);
+	ofDrawLine(mouse.x, 0, mouse.x, ofGetHeight());
+	ofDrawLine(0, mouse.y, ofGetWidth(), mouse.y);
 	ofPopStyle();
 	
 	ofPopStyle();
@@ -835,7 +835,7 @@ void Controller::onSave(){
     if(writeFile.open(meshFile, ofFile::WriteOnly, true)){
         writeFile.write((char*) data, sizeof(float) * dataSize );
     }
-    delete data;
+    delete[] data;
 }
 void Controller::onLoad(){
     // Check if there is no saved file, if not reset
@@ -864,7 +864,7 @@ void Controller::onLoad(){
         float * data = new float[dataSize];
         readFile.read((char*)data, sizeof(float) * dataSize);
         loadVertices(data);
-        delete data;
+        delete[] data;
 			
     }else{
         ofLogWarning("ofxWarpBlendTool::Controller:: unable to load mesh file: "+meshFile);
