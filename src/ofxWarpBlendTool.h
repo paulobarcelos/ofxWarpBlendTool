@@ -56,6 +56,9 @@ namespace ofxWarpBlendTool {
 		void mouseDragged(ofMouseEventArgs & args);
 		void mousePressed(ofMouseEventArgs & args);
 		void mouseReleased(ofMouseEventArgs & args);
+        void mouseScrolled(ofMouseEventArgs & args){};
+        void mouseEntered(ofMouseEventArgs & args){};
+        void mouseExited(ofMouseEventArgs & args){};
         
         float getWindowWidth();
         float getWindowHeight();

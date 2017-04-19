@@ -15,8 +15,8 @@ void ofApp::setup(){
     drawGui = true;
     
     // Pointer to the texture
-    testcard.loadImage("testcard.png");
-    ofTexture * texture = &(testcard.getTextureReference());
+    testcard.load("testcard.png");
+    ofTexture * texture = &(testcard.getTexture());
     
     // Size of the quad you will work with
     ofVec2f size(testcard.getWidth(), testcard.getHeight());
